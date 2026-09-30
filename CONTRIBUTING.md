@@ -8,9 +8,10 @@
 
 ## Branches and PRs
 
-- `main` is protected. Work on short-lived branches: `feat/<system>-<desc>`, `fix/…`, `chore/…`, `content/…`, `deps/…`.
+- Never push to `main`. Work on short-lived branches: `feat/<system>-<desc>`, `fix/…`, `chore/…`, `content/…`, `deps/…`.
 - Commit messages follow Conventional Commits: `feat(loot): add container respawn timer`.
-- A PR needs: green CI, one approving review, and the CODEOWNERS reviewer for touched paths. Squash merge.
+- A PR needs: green CI, one approving review, and the CODEOWNERS reviewer for touched paths. Squash merge (the only merge method enabled).
+- **`main` is not protected on GitHub yet.** `wstnsipe/NoMansLand` is a private repo on GitHub Free, where branch protection and rulesets are unavailable. The rules above are enforced by convention, CI, the pre-commit validator and the Claude Code guard hook, not by GitHub. Enable branch protection (PRs, reviews, conversation resolution, no force-push/deletion, linear history) when collaborators join or the account is upgraded.
 - Fill in the PR template, especially the `.meta` / GUID and dependency questions.
 
 ## Enfusion conventions
