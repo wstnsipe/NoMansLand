@@ -1,0 +1,15 @@
+GameProject {
+ ID "NML_Content"
+ GUID "8C44BDA9D3046928"
+ TITLE "NML_Content"
+ Dependencies {
+  "58D0FB3206B6F859"
+  "C175C744D88BE5AE"
+ }
+ Configurations {
+  GameProjectConfig PC {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}

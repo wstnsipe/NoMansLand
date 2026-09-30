@@ -1,0 +1,16 @@
+GameProject {
+ ID "NML_Tests"
+ GUID "99E85DF2DA22A8D2"
+ TITLE "NML_Tests"
+ Dependencies {
+  "58D0FB3206B6F859"
+  "C175C744D88BE5AE"
+  "8C44BDA9D3046928"
+ }
+ Configurations {
+  GameProjectConfig PC {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}

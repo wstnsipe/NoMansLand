@@ -16,7 +16,30 @@
 
 ## Local dev wrapper (`.local/NML_Dev`)
 
-Local-only and gitignored. `NML_Dev.gproj` depends on the base game (`58D0FB3206B6F859`) and the NML addon GUIDs. The Enfusion MCP copies its handler scripts into the wrapper, never into `addons/`. Created in Phase 2.
+Local-only and gitignored. The Enfusion MCP copies its handler scripts into the wrapper, never into `addons/`. Each developer creates `.local/NML_Dev/NML_Dev.gproj` once; use any random 16-hex `GUID` (it is never referenced):
+
+```
+GameProject {
+ ID "NML_Dev"
+ GUID "<random 16 hex>"
+ TITLE "NML_Dev (local wrapper, never committed)"
+ Dependencies {
+  "58D0FB3206B6F859"
+  "C175C744D88BE5AE"
+  "8C44BDA9D3046928"
+  "2F33881926E82E22"
+  "99E85DF2DA22A8D2"
+ }
+ Configurations {
+  GameProjectConfig PC {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}
+```
+
+Dependencies, in order: base game, `NML_Core`, `NML_Content`, `NML_Scenario_Dev`, `NML_Tests`. Add new NML addons here when they are created.
 
 ## Claude Code usage
 
