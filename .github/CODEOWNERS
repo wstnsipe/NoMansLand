@@ -1,0 +1,8 @@
+# Default owner until NML/Filthy team members join; add area owners per path.
+*                   @wstnsipe
+
+# Lead approval required for dependencies, server configs and safeguards.
+/dependencies/      @wstnsipe
+/server/            @wstnsipe
+/.claude/           @wstnsipe
+/.github/           @wstnsipe

@@ -1,0 +1,29 @@
+{
+  "publicPort": 2001,
+  "a2s": {
+    "address": "${NML_TEST_PUBLIC_IP}",
+    "port": 17777
+  },
+  "rcon": {
+    "address": "${NML_TEST_PUBLIC_IP}",
+    "port": 19999,
+    "password": "${NML_TEST_RCON_PASSWORD}",
+    "permission": "monitor"
+  },
+  "game": {
+    "name": "NML TEST",
+    "password": "${NML_TEST_JOIN_PASSWORD}",
+    "passwordAdmin": "${NML_TEST_ADMIN_PASSWORD}",
+    "admins": ["${NML_ADMIN_1}"],
+    "scenarioId": "${NML_TEST_SCENARIO_ID}",
+    "maxPlayers": 64,
+    "visible": false,
+    "crossPlatform": false,
+    "gameProperties": {
+      "disableThirdPerson": true,
+      "fastValidation": true,
+      "battlEye": true
+    },
+    "mods": []
+  }
+}

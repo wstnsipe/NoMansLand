@@ -1,0 +1,34 @@
+name: Bug report
+description: Something in NML is broken.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: NML version / branch
+    validations:
+      required: true
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      options:
+        - DEV (Workbench / local server)
+        - TEST server
+        - LIVE server
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines (server or client)
+      render: text

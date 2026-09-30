@@ -1,0 +1,41 @@
+name: Mod candidate
+description: Suggest a third-party Workshop mod for evaluation (not an approval).
+title: "[Candidate] <mod name>"
+labels: ["dependency-candidate"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggestions go into the candidate backlog (`dependencies/candidates/`). Nothing is added to NML until the lead approves it.
+  - type: input
+    id: link
+    attributes:
+      label: Workshop link or ID
+      placeholder: https://reforger.armaplatform.com/workshop/XXXXXXXXXXXXXXXX
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: What would it add to NML?
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category (best guess)
+      options:
+        - foundational
+        - content
+        - gameplay
+        - qol-admin
+        - alternative
+        - native
+  - type: textarea
+    id: overlap
+    attributes:
+      label: Known overlaps, alternatives, or conflicts
+  - type: input
+    id: servers
+    attributes:
+      label: Servers known to use it (optional)

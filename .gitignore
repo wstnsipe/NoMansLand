@@ -1,0 +1,34 @@
+# ---- Build output ----
+/build/
+**/output/
+
+# ---- Workbench-generated (Phase 0: created in every loaded addon root) ----
+resourceDatabase.rdb
+
+# ---- EnfusionMCP handler scripts: never commit or publish (wb_cleanup removes them) ----
+addons/*/Scripts/WorkbenchGame/EnfusionMCP/
+
+# ---- Local-only: dev wrapper (NML_Dev), local server profiles, secrets ----
+/.local/
+server/profiles/
+server/configs/*.local.json
+*.secret.json
+.env
+.env.*
+
+# ---- Logs ----
+*.log
+
+# ---- Graphify output (regenerate with: graphify update .) ----
+graphify-out/
+
+# ---- Claude Code machine-specific settings (Graphify hooks live here) ----
+.claude/settings.local.json
+
+# ---- OS / editors ----
+Thumbs.db
+desktop.ini
+.DS_Store
+.vs/
+.vscode/
+*.swp

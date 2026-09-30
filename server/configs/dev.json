@@ -1,0 +1,24 @@
+{
+  "bindPort": 2001,
+  "publicPort": 2001,
+  "a2s": {
+    "address": "127.0.0.1",
+    "port": 17777
+  },
+  "game": {
+    "name": "NML DEV (local)",
+    "password": "",
+    "passwordAdmin": "",
+    "admins": [],
+    "scenarioId": "{ECC61978EDCC2B5A}Missions/23_Campaign.conf",
+    "maxPlayers": 8,
+    "visible": false,
+    "crossPlatform": false,
+    "gameProperties": {
+      "disableThirdPerson": true,
+      "fastValidation": true,
+      "battlEye": false
+    },
+    "mods": []
+  }
+}

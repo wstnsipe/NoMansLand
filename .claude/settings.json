@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(//c/Program Files/Steam/**)",
+      "Edit(//c/Program Files (x86)/Steam/**)",
+      "Edit(//**/steamapps/**)",
+      "Edit(~/Documents/My Games/ArmaReforgerWorkbench/**)",
+      "Edit(~/Documents/My Games/ArmaReforger/**)",
+      "Edit(~/AppData/Local/npm-cache/**)",
+      "Edit(~/.claude.json)",
+      "Edit(~/.claude/plugins/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell|mcp__enfusion-mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"import(require('node:url').pathToFileURL(require('node:path').join(process.env.CLAUDE_PROJECT_DIR||process.cwd(),'.claude','hooks','nml-guard.mjs')).href).catch(e=>console.error('nml-guard failed to load: '+e.message))\"",
+            "timeout": 15,
+            "statusMessage": "NML guard check..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      # LFS content is not downloaded: --ci checks binaries are LFS pointers.
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validator self-tests
+        run: node tools/tests/validate.test.mjs
+      - name: Claude guard hook tests
+        run: node tools/tests/guard.test.mjs
+      - name: Validate repository
+        run: node tools/validate.mjs --ci
+      - name: Candidate index is current
+        run: node tools/candidates-index.mjs --check

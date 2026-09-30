@@ -1,0 +1,7 @@
+#!/bin/sh
+# NML pre-commit hook: run the repository validator before every commit.
+# Installed by tools/install-hooks.ps1. Bypass only with the lead's approval.
+node "$(git rev-parse --show-toplevel)/tools/validate.mjs" || {
+	echo "NML validate failed - commit aborted. Fix the errors above."
+	exit 1
+}

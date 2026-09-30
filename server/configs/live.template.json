@@ -1,0 +1,29 @@
+{
+  "publicPort": 2001,
+  "a2s": {
+    "address": "${NML_LIVE_PUBLIC_IP}",
+    "port": 17777
+  },
+  "rcon": {
+    "address": "${NML_LIVE_PUBLIC_IP}",
+    "port": 19999,
+    "password": "${NML_LIVE_RCON_PASSWORD}",
+    "permission": "monitor"
+  },
+  "game": {
+    "name": "No Man's Land",
+    "password": "",
+    "passwordAdmin": "${NML_LIVE_ADMIN_PASSWORD}",
+    "admins": ["${NML_ADMIN_1}"],
+    "scenarioId": "${NML_LIVE_SCENARIO_ID}",
+    "maxPlayers": 64,
+    "visible": true,
+    "crossPlatform": false,
+    "gameProperties": {
+      "disableThirdPerson": true,
+      "fastValidation": true,
+      "battlEye": true
+    },
+    "mods": []
+  }
+}
