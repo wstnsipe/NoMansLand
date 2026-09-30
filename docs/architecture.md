@@ -32,7 +32,7 @@ Arsenal curation + rank locking (on vanilla `SCR_ArsenalComponent` / `SCR_Charac
 
 | Env | Mod source | Config |
 |---|---|---|
-| DEV | unpacked addons from your checkout via `tools/wb-dev.ps1` / `-addonsDir` | `server/configs/dev.json` |
+| DEV | unpacked addons from your checkout via `-addonsDir` (`tools/wb-dev.ps1`, `tools/server-dev.ps1`, `tools/client-dev.ps1`) | `-server <world>` mode on the diag server ([workflows](workflows.md#local-multiplayer-dev-server--clients)); `server/configs/dev.json` once NML is on the Workshop |
 | TEST | Workshop items at the release-candidate version, **pinned** | `server/configs/test.template.json` |
 | LIVE | Workshop items at the promoted version, **pinned** | `server/configs/live.template.json` |
 
@@ -42,7 +42,7 @@ Server-config mod entries are `{modId, name, version?, required?}`; an omitted `
 
 - **Enfusion MCP:** research first (`api_search`, `wiki_search`, `game_read`). Write tools always get an explicit `projectPath`; `mod_build` always gets `outputPath` under `build/`. The `.claude` guard hook enforces this.
 - **Graphify:** parses Enforce Script as C — it maps files→symbols but misses class declarations and inheritance. Use `api_search` + Grep for class relationships.
-- **Dedicated server:** Arma Reforger Server (Steam app 1874900) is required for local multiplayer tests (not installed yet on the lead's PC).
+- **Dedicated server:** Arma Reforger Server (Steam app 1874900) is required for local multiplayer tests. Local unpublished addons need its diag exe in `-server` world mode (see [workflows](workflows.md#local-multiplayer-dev-server--clients)).
 
 ## Open decisions (safe to defer)
 

@@ -2,7 +2,7 @@
 
 ## One-time setup
 
-1. Install Git LFS, Node 18+, and Arma Reforger Tools (Steam). Enable Workbench's Net API (File > Options > General > Net API, port 5775) if you use the Enfusion MCP.
+1. Install Git LFS, Node 18+, Arma Reforger Tools and Arma Reforger Server (Steam app 1874900, for local multiplayer tests). Enable Workbench's Net API (File > Options > General > Net API, port 5775) if you use the Enfusion MCP.
 2. Clone, then run `powershell -ExecutionPolicy Bypass -File tools\install-hooks.ps1` (enables LFS for this repo and installs the pre-commit validator).
 3. Run `node tools/validate.mjs` — it must report 0 errors.
 
@@ -10,8 +10,8 @@
 
 - Never push to `main`. Work on short-lived branches: `feat/<system>-<desc>`, `fix/…`, `chore/…`, `content/…`, `deps/…`.
 - Commit messages follow Conventional Commits: `feat(loot): add container respawn timer`.
-- A PR needs: green CI, one approving review, and the CODEOWNERS reviewer for touched paths. Squash merge (the only merge method enabled).
-- **`main` is not protected on GitHub yet.** `wstnsipe/NoMansLand` is a private repo on GitHub Free, where branch protection and rulesets are unavailable. The rules above are enforced by convention, CI, the pre-commit validator and the Claude Code guard hook, not by GitHub. Enable branch protection (PRs, reviews, conversation resolution, no force-push/deletion, linear history) when collaborators join or the account is upgraded.
+- A PR needs green CI (run by convention; not yet a required status check) and resolved conversations. Squash merge is the only merge method enabled. Once collaborators join, PRs also need one approving review and the CODEOWNERS reviewer for touched paths.
+- **`main` is protected on GitHub** by the `protect-main` ruleset (public repo): changes only through a pull request, conversations must be resolved, no force-push, no branch deletion, linear history, squash merge only, no bypass actors. Approving reviews are **not required yet** because there is a single active developer. When collaborators join, raise `required_approving_review_count` to 1, turn on "require code owner review" and make the `validate` CI check required.
 - Fill in the PR template, especially the `.meta` / GUID and dependency questions.
 
 ## Enfusion conventions

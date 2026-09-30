@@ -9,11 +9,12 @@
 # (port 5775) is already answering. EnfusionMCP handler scripts belong in the
 # wrapper (.local/), never in addons/.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\wb-dev.ps1 [-ToolsPath <dir>] [-GamePath <dir>] [-NoWait]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\wb-dev.ps1 [-ToolsPath <dir>] [-GamePath <dir>] [-McpHandlers <dir>] [-NoWait]
 
 param(
 	[string]$ToolsPath = $(if ($env:ENFUSION_WORKBENCH_PATH) { $env:ENFUSION_WORKBENCH_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger Tools" }),
 	[string]$GamePath = $(if ($env:ENFUSION_GAME_PATH) { $env:ENFUSION_GAME_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger" }),
+	[string]$McpHandlers = $env:ENFUSION_MCP_HANDLERS,
 	[int]$Port = 5775,
 	[switch]$NoWait
 )
@@ -33,9 +34,27 @@ if (-not (Test-Path $wrapper)) { throw "Dev wrapper not found: $wrapper. It is c
 if (-not (Test-Path $addons)) { throw "Addons folder not found: $addons" }
 if (-not (Test-Path (Join-Path $GamePath "addons"))) { throw "Game install not found at $GamePath (set -GamePath or ENFUSION_GAME_PATH)." }
 
+if (-not $McpHandlers) {
+	# Newest npx copy of the enfusion-mcp package (read-only source; we only copy from it).
+	$McpHandlers = Get-ChildItem (Join-Path $env:LOCALAPPDATA "npm-cache\_npx\*\node_modules\enfusion-mcp\mod\Scripts\WorkbenchGame\EnfusionMCP") -Directory -ErrorAction SilentlyContinue |
+		Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+}
+
 if (Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "ArmaReforgerWorkbench*" }) {
 	Write-Warning "Workbench is already running. Close it first so it restarts with -addonsDir."
 	exit 1
+}
+
+# Install the MCP handler scripts into the wrapper (what wb_launch would do), so the
+# wb_* tools work and the MCP never falls back to its kill-and-relaunch recovery,
+# which would restart Workbench without -addonsDir.
+if ($McpHandlers -and (Test-Path $McpHandlers)) {
+	$handlerTarget = Join-Path (Split-Path -Parent $wrapper) "Scripts\WorkbenchGame\EnfusionMCP"
+	New-Item -ItemType Directory -Force -Path $handlerTarget | Out-Null
+	Copy-Item -Path (Join-Path $McpHandlers "*.c") -Destination $handlerTarget -Force
+	Write-Host "MCP handlers copied into the wrapper: $handlerTarget"
+} else {
+	Write-Warning "enfusion-mcp handler scripts not found (pass -McpHandlers <dir>); wb_* tools will not work."
 }
 
 Write-Host "Starting Workbench:`n  exe:       $exe`n  gproj:     $wrapper`n  addonsDir: $addons"

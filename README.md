@@ -2,7 +2,7 @@
 
 A hardcore multiplayer Arma Reforger server and mod project.
 
-> Status: repository skeleton (Phase 1). No NML addons exist yet.
+> Status: local DEV loop established (Phase 4): four NML addons, a DEV scenario on Everon, local dedicated server + clients, first Autotest suite. No gameplay systems yet. Daily loop: [docs/workflows.md](docs/workflows.md).
 
 ## Layout
 
@@ -29,4 +29,4 @@ A hardcore multiplayer Arma Reforger server and mod project.
 - Third-party mods are external dependencies only: never vendored or modified. See [dependencies/README.md](dependencies/README.md).
 - `.meta` files are committed and always travel with their resource.
 
-Private repository. See [LICENSE](LICENSE).
+Public repository, all rights reserved (placeholder license, to be finalized). See [LICENSE](LICENSE).

@@ -101,6 +101,15 @@ const cases = [
 		"addons/NML_Content/Assets/NML/tex.edds.meta": "MetaFileClass {\n Name \"{CCCCCCCCCCCCCCCC}Assets/NML/tex.edds\"\n}\n",
 	}, 1, /not an LFS pointer/, ["--ci"]],
 	["resourceDatabase.rdb needs no .meta", { "addons/NML_Core/resourceDatabase.rdb": "db" }, 0, null],
+	["world .layer needs no .meta", {
+		"addons/NML_Core/Worlds/NML/W/W.ent": "SubScene {\n}\n",
+		"addons/NML_Core/Worlds/NML/W/W.ent.meta": "MetaFileClass {\n Name \"{DDDDDDDDDDDDDDDD}Worlds/NML/W/W.ent\"\n}\n",
+		"addons/NML_Core/Worlds/NML/W/W_Layers/default.layer": "",
+	}, 0, null],
+	["world .ent without .meta still fails", {
+		"addons/NML_Core/Worlds/NML/W/W.ent": "SubScene {\n}\n",
+		"addons/NML_Core/Worlds/NML/W/W_Layers/default.layer": "",
+	}, 1, /resource has no \.meta.*W\.ent/],
 ];
 
 let fail = 0;

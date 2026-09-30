@@ -7,7 +7,7 @@ Each subfolder is one Enfusion addon with its own `.gproj`, GUID and (if publish
 | `NML_Core` | Scripts, configs, game mode, UI, string tables, persistence config. No terrain references. | base game + approved core deps | Yes |
 | `NML_Content` | Prefabs, models, textures, sounds, catalogs | NML_Core | Yes |
 | `NML_Scenario_Dev` | Mission header + sub-scene on a base-game terrain for DEV/TEST | Core, Content | No |
-| `NML_Tests` | Autotest suites and test worlds | Core, Content | Never |
+| `NML_Tests` | Autotest suites and test worlds | Core, Content, Scenario_Dev (tests load the DEV world/mission) | Never |
 | `NML_Compat_<Mod>` | Integration with one approved third-party mod | Core + that mod | If needed |
 | `NML_Scenario_Mangrove` (later) | Scenario on Mangrove's terrain | Core, Content, Mangrove map | Yes |
 

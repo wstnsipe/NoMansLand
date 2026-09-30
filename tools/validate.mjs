@@ -24,7 +24,9 @@ const CATEGORIES = ["foundational", "content", "gameplay", "qol-admin", "alterna
 // Keep in sync with the LFS section of .gitattributes.
 const LFS_EXT = [".xob", ".fbx", ".edds", ".dds", ".tif", ".tiff", ".tga", ".png", ".jpg", ".jpeg", ".psd", ".wav", ".ogg", ".anm"];
 // Files that never get a .meta (scripts, project files, generated DBs, docs).
-const NO_META_EXT = [".c", ".gproj", ".meta", ".rdb", ".md", ".txt"];
+// .layer: world layer files (<world>_Layers/*.layer) are not registered resources; Workbench
+// refuses to register them and the base game has none in its resource DB (Phase 4).
+const NO_META_EXT = [".c", ".gproj", ".meta", ".rdb", ".md", ".txt", ".layer"];
 
 const errors = [];
 const warnings = [];

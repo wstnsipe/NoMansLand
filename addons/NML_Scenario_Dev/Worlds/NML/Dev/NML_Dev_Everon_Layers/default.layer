@@ -1,0 +1,12 @@
+SCR_BaseGameMode NML_Dev_GameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" {
+ coords 4800 168 6890
+}
+SCR_FactionManager NML_Dev_FactionManager : "{A1C54BBE72C5C696}Prefabs/MP/Managers/Factions/FactionManager_FFA.et" {
+ coords 4802 168 6890
+}
+SCR_SpawnPoint NML_Dev_SpawnPoint : "{5392C4D80E4B18F8}Prefabs/MP/Spawning/SpawnPoint_FFA.et" {
+ coords 4800 168 6900
+}
+SCR_LoadoutManager NML_Dev_LoadoutManager : "{B7E5D7F4864D81C0}Prefabs/MP/Managers/Loadouts/LoadoutManager_FFA.et" {
+ coords 4804 168 6890
+}
