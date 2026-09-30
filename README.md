@@ -29,4 +29,4 @@ A hardcore multiplayer Arma Reforger server and mod project.
 - Third-party mods are external dependencies only: never vendored or modified. See [dependencies/README.md](dependencies/README.md).
 - `.meta` files are committed and always travel with their resource.
 
-Public repository, all rights reserved (placeholder license, to be finalized). See [LICENSE](LICENSE).
+Public, source-visible repository. All rights reserved: no license is granted (interim terms, to be finalized). See [LICENSE](LICENSE).
