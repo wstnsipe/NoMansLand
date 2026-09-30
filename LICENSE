@@ -1,11 +1,14 @@
 Copyright (c) 2026 No Man's Land (NML) project. All rights reserved.
 
-This repository and its contents are proprietary and confidential. No license
-is granted to use, copy, modify, or distribute any part of it without prior
-written permission from the repository owner.
+The source code and other contents of this repository are publicly visible so
+that they can be read and reviewed. Visibility does not grant any license: no
+permission is given to use, copy, modify, redistribute, sublicense or create
+derivative works from any part of this repository without prior written
+permission from the repository owner.
 
 Third-party mods referenced in dependencies/ remain under their own licenses and
-are not part of this repository.
+are not part of this repository. Base-game content and APIs remain the property
+of Bohemia Interactive and are subject to its terms.
 
-(Placeholder default for the private repository. To be finalized before any
-public release; see the open license decision in docs/architecture.md.)
+(Interim all-rights-reserved terms. To be finalized before any public release
+or outside contribution; see the open license decision in docs/architecture.md.)

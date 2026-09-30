@@ -46,4 +46,4 @@ Server-config mod entries are `{modId, name, version?, required?}`; an omitted `
 
 ## Open decisions (safe to defer)
 
-License (placeholder: proprietary), Workshop publisher account, TEST/LIVE hosting, persistence backend (default: built-in Persistence System), medical system, Mangrove handoff, candidate mods.
+License (interim: all rights reserved, source-visible; no reuse rights granted), Workshop publisher account, TEST/LIVE hosting, persistence backend (default: built-in Persistence System), medical system, Mangrove handoff, candidate mods.
