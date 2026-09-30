@@ -1,4 +1,8 @@
 SCR_BaseGameMode NML_Dev_GameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" {
+ components {
+  NML_CoreComponent "{6A7D5145BA7B9151}" {
+  }
+ }
  coords 4800 168 6890
 }
 SCR_FactionManager NML_Dev_FactionManager : "{A1C54BBE72C5C696}Prefabs/MP/Managers/Factions/FactionManager_FFA.et" {
