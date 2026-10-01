@@ -1,5 +1,7 @@
 # NML AI Workboard
 
+All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_RULES.md).
+
 ## Global Rules
 
 - `main` is protected. Never work directly on `main`.
