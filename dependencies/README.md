@@ -1,6 +1,6 @@
 # Dependencies
 
-Third-party mods (and the future Mangrove map) are **external dependencies only**: never vendored, copied or modified in this repository. See [ADR 0003](../docs/adr/0003-dependency-process.md).
+Third-party mods (and the Myrove terrain with its dependencies) are **external dependencies only**: never vendored, copied or modified in this repository. See [ADR 0003](../docs/adr/0003-dependency-process.md).
 
 | File | Purpose |
 |---|---|

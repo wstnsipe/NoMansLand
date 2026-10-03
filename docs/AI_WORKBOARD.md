@@ -45,8 +45,9 @@ All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_
 ### Current
 - [x] Phase 5.2 complete
 - [x] Stage 5.3 complete (PR #7, `568f363`)
-- [x] Stage 5.4 two-client validation and docs done; PR awaiting Weston's review
-- [ ] Stage 5 close-out: Stage 5.4 PR merged
+- [x] Stage 5.4 complete (PR #8, `b4ee89f`); Stage 5 closed
+- [ ] Stage 6.1: proposed ADR 0006 (Myrove), Mangrove → Myrove naming, workboard cleanup; PR awaiting Weston's review
+- [ ] Stage 6.2–6.7: Myrove candidates, dependency tooling, registration, `NML_Scenario_Myrove`, compatibility strategy, arsenal handoff contract (each a separate gate)
 - [ ] Finalize V1 dependency set
 - [ ] Finalize V1 arsenal inputs
 
@@ -117,8 +118,10 @@ All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_
 | Task | Owner | Branch | Scope | Status |
 |---|---|---|---|---|
 | Stage 5.3 Arsenal implementation | Weston | `feat/arsenal-curation` | NML_Core arsenal system | Merged (PR #7) |
-| Stage 5.4 Arsenal validation + docs | Weston | `test/stage-5.4-two-client-validation` | NML_Tests helper, architecture/capability docs | In review |
-| Myrove evaluation | TBD | — | Workshop dependency research | Planned |
+| Stage 5.4 Arsenal validation + docs | Weston | `test/stage-5.4-two-client-validation` | NML_Tests helper, architecture/capability docs | Merged (PR #8) |
+| Myrove evaluation | Weston | — | Feasibility spike (Workbench, dedicated server, client) | Done; findings in `docs/research/2026-10-02-arsenal-status.md` |
+| Stage 6.1 Myrove ADR + naming + workboard | Weston | `chore/stage-6.1-myrove-adr` | Docs only: ADR 0006 (proposed), Myrove naming | In review |
+| Stage 6.2–6.5 Myrove integration | Weston | per sub-stage | Candidates, tooling, registration, `NML_Scenario_Myrove` | Planned; each needs approval |
 | V1 arsenal research | Cornelius/FRIT split | — | Resource discovery only | Planned |
 
 ---

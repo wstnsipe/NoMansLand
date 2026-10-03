@@ -13,7 +13,7 @@ Rules:
 No Man's Land (NML): hardcore multiplayer Arma Reforger server/mod. Overview: `docs/architecture.md`; decisions: `docs/adr/`; daily loop: `docs/workflows.md`.
 
 ### Addons (`addons/`)
-- `NML_Core` (scripts, configs, UI, game mode — no terrain references), `NML_Content` (prefabs, assets), `NML_Scenario_Dev` (dev scenario on a base-game terrain), `NML_Tests` (never published), `NML_Compat_<Mod>` (third-party integration), later `NML_Scenario_Mangrove`.
+- `NML_Core` (scripts, configs, UI, game mode — no terrain references), `NML_Content` (prefabs, assets), `NML_Scenario_Dev` (dev scenario on a base-game terrain), `NML_Tests` (never published), `NML_Compat_<Mod>` (third-party integration), later `NML_Scenario_Myrove`.
 - Local dev wrapper `.local/NML_Dev/` is gitignored. Start Workbench with `tools/wb-dev.ps1` (passes `-addonsDir`); the Enfusion MCP attaches after.
 
 ### Conventions
@@ -46,7 +46,7 @@ No Man's Land (NML): hardcore multiplayer Arma Reforger server/mod. Overview: `d
 - Before a PR: `node tools/validate.mjs`, `mod_validate` per touched addon, ECC `code-review` (plus `security-review` for RPC, admin and persistence code).
 
 ### NML safeguards — never touch
-Base game / Arma Reforger Tools / any `steamapps` folder; `Documents/My Games/ArmaReforgerWorkbench` (incl. the EnfusionMCP support addon) and `Documents/My Games/ArmaReforger`; the npm cache; `~/.claude.json`; `~/.claude/plugins`; production/server hosts; third-party mod folders; the Mangrove map.
+Base game / Arma Reforger Tools / any `steamapps` folder; `Documents/My Games/ArmaReforgerWorkbench` (incl. the EnfusionMCP support addon) and `Documents/My Games/ArmaReforger`; the npm cache; `~/.claude.json`; `~/.claude/plugins`; production/server hosts; third-party mod folders; the Myrove map.
 
 ### Ask the user first
 GUID changes; `.gproj` dependency changes; persistence schema changes; candidate promotion; anything under `server/`; publishing to the Workshop; deleting files; creating or pushing the GitHub repo (`wstnsipe/NoMansLand`).
