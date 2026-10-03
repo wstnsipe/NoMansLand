@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { closure, parseIds } from "./lib/registry-closure.mjs";
 
 const args = process.argv.slice(2);
 const ROOT = path.resolve(args.includes("--root") ? args[args.indexOf("--root") + 1] : path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
@@ -111,8 +112,8 @@ function checkRegistry()
 			err("registry", `${id}: scope must be core|content|scenario|server-only`);
 		if (m.channel && !["stable", "dev"].includes(m.channel))
 			err("registry", `${id}: channel must be stable|dev`);
-		if (m.licenseClass && !["GPL", "APL", "APL-ND", "custom"].includes(m.licenseClass))
-			err("registry", `${id}: licenseClass must be GPL|APL|APL-ND|custom`);
+		if (m.licenseClass && !["GPL", "APL", "APL-SA", "APL-ND", "custom"].includes(m.licenseClass))
+			err("registry", `${id}: licenseClass must be GPL|APL|APL-SA|APL-ND|custom`);
 		if (m.usageRestriction && !m.permissionRecord)
 			err("registry", `${id}: usage-restricted mod needs a permissionRecord`);
 		if (m.isCollection)
@@ -129,6 +130,42 @@ function checkRegistry()
 		if (m.modId)
 			registry.set(m.modId, m);
 	}
+	checkRegistryGraph();
+}
+
+// requires / requiredBy: ids are well formed, every required mod is registered, both sides of an
+// edge agree, and there are no cycles. (A requiredBy id that is not registered is not checked.)
+function checkRegistryGraph()
+{
+	for (const [id, m] of registry)
+	{
+		const label = `${id} (${m.name})`;
+		for (const field of ["requires", "requiredBy"])
+			for (const g of parseIds(m[field]))
+				if (!GUID_RE.test(g))
+					err("registry", `${label}: ${field} entry "${g}" must be 16 uppercase hex chars`);
+		for (const dep of parseIds(m.requires))
+		{
+			if (dep === id)
+			{
+				err("registry", `${label}: requires itself`);
+				continue;
+			}
+			const d = registry.get(dep);
+			if (!d)
+				err("registry", `${label}: requires ${dep}, which is not registered`);
+			else if (!parseIds(d.requiredBy).includes(id))
+				err("registry", `${label}: requires ${dep} (${d.name}) but its requiredBy does not list ${id}`);
+		}
+		for (const user of parseIds(m.requiredBy))
+		{
+			const u = registry.get(user);
+			if (u && !parseIds(u.requires).includes(id))
+				err("registry", `${label}: requiredBy lists ${user} (${u.name}) but its requires does not list ${id}`);
+		}
+	}
+	for (const cycle of closure(registry, [...registry.keys()]).cycles)
+		err("registry", `dependency cycle: ${cycle.join(" -> ")}`);
 }
 
 // ---------------------------------------------------------------- addons
@@ -177,6 +214,10 @@ function checkAddons()
 			if (!registry.has(g))
 				err("gproj", `${name}: dependency ${g} is not an approved entry in dependencies/mods.json`);
 		}
+		// The closure of every registered dependency must be registered too (a scenario that
+		// depends on a terrain needs the terrain's own dependencies in the registry).
+		for (const m of closure(registry, guids.filter((g) => registry.has(g))).missing)
+			err("gproj", `${name}: dependency closure incomplete: ${m.by} requires ${m.id}, which is not registered`);
 	}
 }
 
@@ -303,6 +344,35 @@ function checkServerConfigs()
 				if (isLive && reg.channel === "dev" && !reg.liveDevChannelApproved)
 					err("server", `${f}: mod ${id} is a Dev-channel build; LIVE needs liveDevChannelApproved in the registry`);
 			}
+		}
+		if (pinned)
+		{
+			// A pinned list must carry the complete registered closure of every mod it lists.
+			const listed = new Set((cfg.game?.mods || []).map((m) => String(m.modId).toUpperCase()));
+			// Roots: listed registry mods, plus the registered third-party dependencies that listed NML addons
+			// reach through their .gproj files (an NML addon is not in the registry itself).
+			const roots = new Set([...listed].filter((g) => registry.has(g)));
+			const seenAddons = new Set();
+			const walkAddon = (guid) =>
+			{
+				if (seenAddons.has(guid) || !nmlGuids.has(guid))
+					return;
+				seenAddons.add(guid);
+				const block = /Dependencies\s*\{([^}]*)\}/.exec(nmlGuids.get(guid).text)?.[1] || "";
+				for (const m of block.matchAll(/"([0-9A-Fa-f]{16})"/g))
+				{
+					const dep = m[1].toUpperCase();
+					if (nmlGuids.has(dep))
+						walkAddon(dep);
+					else if (registry.has(dep))
+						roots.add(dep);
+				}
+			};
+			for (const g of listed)
+				walkAddon(g);
+			for (const dep of closure(registry, [...roots]).order)
+				if (!listed.has(dep))
+					err("server", `${f}: mod ${dep} (${registry.get(dep).name}) is required by a listed mod but missing from game.mods`);
 		}
 		info.push(`[size] ${f}: third-party download ${totalMB.toFixed(1)} MB (${(cfg.game?.mods || []).length} mods)`);
 	}

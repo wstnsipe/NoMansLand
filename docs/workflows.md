@@ -80,6 +80,26 @@ powershell -ExecutionPolicy Bypass -File tools\autotest-dev.ps1 -Test <SuiteOrCa
   The table holds for either player faction, because the policy follows the arsenal. Server log per rejection: `[NML] Rejected arsenal request: player <id>, arsenal faction <US|USSR|none>, prefab <name>`. The `faction 'none'` warning appears once per server process.
 - `-IncludeTests` must be passed to both server and client; never use it outside test worlds.
 
+## Third-party Workshop dependencies (Stage 6.3 tooling)
+
+Third-party mods stay external ([ADR 0003](adr/0003-dependency-process.md), [ADR 0006](adr/0006-myrove-integration.md)). Nothing is registered yet, so the registry-driven commands below fail with a clear message until Weston approves candidates and a registration PR lands.
+
+| Tool | What it does |
+|---|---|
+| `node tools/modlist.mjs --root <GUID> \| --scenario <addon> [--format mods\|json\|guids]` | Prints the pinned `game.mods` block (dependencies first, deterministic) for the closure of a registry mod or a scenario's `.gproj`. Stdout only; never writes `server/configs`. Fails on an unregistered root, an unregistered required mod, a cycle or a missing version. |
+| `powershell -File tools\workshop-sync.ps1 (-Scenario <name> \| -Root <GUID>) [-Verify] [-DryRun]` | Downloads the closure at the registry pins into the gitignored `.local\workshop\addons` through the official dedicated-server download, then verifies each package's version manifest. `-Verify` only checks; `-DryRun` prints the plan. |
+| `server-dev.ps1 -Scenario <name> -World <world>`, `client-dev.ps1 -Scenario <name>` | Load that scenario addon instead of `NML_Scenario_Dev`, and add `.local\workshop\addons` to `-addonsDir` when the scenario has third-party dependencies. Without `-Scenario` nothing changes. |
+| `node tools/log-scan.mjs <log-or-dir>... [--baseline <json>] [--json] [--fail-on <cats>]` | Scans `console.log`/`error.log` for missing addons, wrong GUIDs, script-compile errors, RPC and replication errors, platform-init failures and other script errors. `--baseline` marks findings from an earlier run as known so a batch only reports what is new. Each pattern is labelled `local-log`, `documented` or `unverified` in the source. |
+
+Verified Workshop and `-addonsDir` behaviour (Stage 6.3, game 1.8.0.13):
+
+- `-addonsDir` takes **one argument with a comma separated list** of directories, e.g. `-addonsDir "C:\repo\addons,C:\repo\.local\workshop\addons"`. Verified in Workbench, the world-mode diag server and a diag client (the Myrove spike used three directories), and again with a Workshop-format folder under `.local`. `-addons` then lists only the top-level addons; their dependencies resolve through each addon's own `.gproj`.
+- `-addonDownloadDir <dir>` makes the server or game download Workshop addons into `<dir>\addons\<Name>_<GUID>\`.
+- A server config `game.mods` entry with `version` downloads **exactly that version**: `1.0.12` was fetched while `1.0.13` was current, and the files carry `*_1.0.12_manifest.json`. A version that does not exist fails closed (`Attempt to download an empty package`, `Unable to initialize the game`).
+- **Rollback is not guaranteed.** The BI wiki says the Workshop keeps only the last 50 versions of a mod and deletes removed versions, so a pinned version can disappear. Record a working pin set before changing versions.
+- Not verified: whether the server downloads a mod's own dependencies at their latest version when they are not listed. TEST/LIVE lists carry the full closure, and `tools/validate.mjs` enforces it.
+- The config-mode server (`-config`) refuses `-addons` and `-addonsDir` together with unpublished NML addons; local runs of NML addons stay in `-server` world mode, and `workshop-sync.ps1` uses config mode only to download.
+
 ## Local dev wrapper (`.local/NML_Dev`)
 
 Local-only and gitignored. The Enfusion MCP copies its handler scripts into the wrapper, never into `addons/`. Each developer creates `.local/NML_Dev/NML_Dev.gproj` once; use any random 16-hex `GUID` (it is never referenced):

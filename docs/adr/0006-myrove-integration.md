@@ -26,7 +26,7 @@ A lead-run feasibility spike loaded Myrove and its closure in Workbench, on a wo
 4. **Version pinning.**
    - TEST and LIVE pin an exact `X.Y.Z` per package, equal to the registry version (already enforced by `tools/validate.mjs`).
    - Bump: candidate file updated, compatibility batch 1 (Myrove and its closure) rerun on a `deps/bump-<mod>-<version>` branch, lead approval, then registry and TEST updated. LIVE is promoted separately.
-   - Rollback: revert the pin change. Whether older Workshop versions stay downloadable is to be verified before relying on it.
+   - Rollback: revert the pin change. Verified in Stage 6.3 (probe with Warfare-Colormod, game 1.8.0.13): a dedicated server given `version` `1.0.12` while `1.0.13` was current downloaded exactly `1.0.12`, and a version that does not exist fails closed (the server refuses to start). The BI wiki says the Workshop keeps only the last 50 versions of a mod and deletes removed versions, so exact historical rollback is **not guaranteed**: it works only while the old version is still published.
 5. **Local acquisition.** Local integration runs use a gitignored `.local/workshop/` folder filled through the official Workshop download of the dedicated server at the pinned versions. The game's own download folder (`Documents/My Games/ArmaReforger/addons/`) is not the integration source; read-only use for research or troubleshooting stays allowed.
 6. **Accepted terrain characteristics.** These are accepted as they are unless one causes a direct integration defect, and are handled on NML's side:
    - no 2D topographic map data: map and HUD policy work around it;
