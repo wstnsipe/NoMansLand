@@ -1229,7 +1229,7 @@ These are historical considered packages, not production approvals. Local projec
 | [IRBA](https://reforger.armaplatform.com/workshop/94349117F380C47C) (`94349117F380C47C`) | Optional / deferred | Not found; installed version unknown | Not locally resolved | Catalog compatibility concept from earlier handoff; actual dependency/integration evaluation incomplete. |
 | [Stun Grenade](https://reforger.armaplatform.com/workshop/59EAA899751805DF) (`59EAA899751805DF`) | Excluded-chain dependency | 1.3.0; project found; GUID 59EAA899751805DF | None beyond vanilla | Required by excluded Concussion; not selected for the 87-package set. |
 
-Other locally discovered SlavicWar projects and Myrove are documented in the [arsenal/resource handoff](2026-10-02-arsenal-status.md). They are not silently added to this inventory.
+Other locally discovered SlavicWar projects and Myrove (the lead-confirmed terrain) are documented in the [arsenal/resource handoff](2026-10-02-arsenal-status.md). They are not silently added to this inventory.
 
 ## Evidence limitations and remaining checks
 

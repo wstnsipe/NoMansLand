@@ -67,23 +67,27 @@ Historical logs contain wrong GUID/name references for `{536BF67B2052B869}materi
 - Workshop link: [Myrove](https://reforger.armaplatform.com/workshop/6A3C510B132310CA).
 - Workshop ID and locally inspected project GUID: `6A3C510B132310CA`.
 - Installed metadata version: `1.0.4`.
-- Project file found locally; no complete payload/manifest audit or gameplay test claimed for this package.
-- Outside the current 87-package candidate/download inventory. Workboard evaluation remains **Planned**, owner **TBD**.
-- **Full dependency-name, transitive-dependency, installation-completeness and compatibility evaluation is pending.** Do not treat discovery as approval or add these dependencies automatically.
+- Weston has confirmed Myrove as NML's intended terrain (2026-10-02). It is still **not registered or approved as a dependency**; dependency registration, version pins and the scenario addon require separate approval.
+- Outside the current 87-package candidate/download inventory.
+- A lead-run local feasibility spike (not a member test) loaded Myrove and its full dependency closure in Workbench, a world-mode dedicated server and one client. Terrain world: `{4BF701326CC65F35}Myrove_Map.ent`.
+- The 10 direct dependencies below have **no additional transitive dependencies** and are all installed on the lead's PC; the closure is about 5.2 GB.
+- Limitations seen: no navmesh/AIWorld, no 2D topographic map data, and Warfare-Colormod applies a global screen color grade on every client.
+- Licenses are declared per package (APL, APL-SA and APL-ND appear). They are recorded for Weston's review and no legal conclusion is drawn here.
+- Do not treat discovery as approval or add these dependencies automatically.
 
-Direct external dependency GUIDs from the installed project, excluding vanilla:
+Direct external dependencies from the installed project, excluding vanilla:
 
 ```text
-672166DE5926F11F
-66FC1E0F608A4AFA
-62EB4D903D542287
-6206C7238516657B
-61330C2DC7724DEA
-69770D09755CE1DC
-68D6FA70573ED4FE
-660EFAA574D2ED8C
-685B702A27B57341
-65A2EA40DC9E632A
+672166DE5926F11F  Minus Building Pack
+66FC1E0F608A4AFA  Malvian Bushwar Props Pack
+62EB4D903D542287  CIE Props
+6206C7238516657B  Crocell's Workshop of Horrors
+61330C2DC7724DEA  Assets for Tools by Heine
+69770D09755CE1DC  RUINS models
+68D6FA70573ED4FE  Ulups Assets
+660EFAA574D2ED8C  Booses Bodies
+685B702A27B57341  Snowzin Trenches Pack
+65A2EA40DC9E632A  Warfare-Colormod
 ```
 
 ## Other locally discovered projects — not selected additions
@@ -171,7 +175,7 @@ Proposed scratch `Prefabs/Arsenal/NML_Arsenal.et` and `Configs/Arsenal/NML_Arsen
 
 Recorded publication checks for the earlier PR: repository validator 0 errors/0 warnings; validator tests 27/27; guard tests 47/47; candidate index current; CI run `36956827220` successful. Those results concern repository rules, not mod compatibility. Current publication validation/CI is reported on PR #6 rather than inferred from the earlier run.
 
-Arma Reforger and Tools were discovered in the standard Steam `steamapps/common/Arma Reforger` and `steamapps/common/Arma Reforger Tools` folders. Dedicated-server installation/path remains unverified. No FPS, server-load or endurance benchmark exists.
+Arma Reforger and Tools were discovered in the standard Steam `steamapps/common/Arma Reforger` and `steamapps/common/Arma Reforger Tools` folders. The dedicated server is installed and was used for a two-client test and the Myrove spike on the lead's PC; installation on member PCs remains unverified. No FPS, server-load or endurance benchmark exists.
 
 Author-reported limitations remain untested here: Maxxpro M134 turret unresolved; 2-7 server smoke needs server testing; VooDoo needs compatible RIS weapon/optic; several weapon packages target older game versions; FORTEX and 2-7 heating overlap. PC-focused blood-effect preference is not a performance result.
 
@@ -198,8 +202,8 @@ Author-reported limitations remain untested here: Maxxpro M134 turret unresolved
 19. Find Bacon's exact editor action/component and determine whether it mirrors an overwrite list or another catalog.
 20. Verify NML server enforcement through Bacon and other acquisition routes; no whitelist test exists.
 21. Decide whether Bacon Arsenal Only/IRBA or face selection are needed; they remain optional/deferred.
-22. Assign Myrove evaluation and resolve its dependency names, transitive closure, completeness and compatibility.
-23. Establish dedicated-server installation/path and a two-client test setup.
+22. Approve dependency registration and version pins for Myrove and its 10 dependencies (Myrove is confirmed as the intended terrain).
+23. Define the two-client and dedicated-server test procedure for the V1 candidate stack (the server and two-client setup are verified on the lead's PC).
 24. Approve production integration scope/owner/branch and dependency promotion before any `.gproj` or server-list edit.
 25. Explicitly approve Stage 5.3 before implementation. Follow accepted vanilla-first ADR 0005; do not infer an architecture change from this research.
 
