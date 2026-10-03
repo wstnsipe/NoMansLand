@@ -23,6 +23,7 @@
 - [ ] Admin tools work; no client can trigger server outcomes directly
 - [ ] Performance: server FPS and tick within budget with expected player count
 - [ ] Rollback plan: previous version still pinned-able
+- [ ] Arsenal curation (ADR 0005): after any game update, re-check that vanilla `SCR_ResourcePlayerControllerInventoryComponent.RpcAsk_ArsenalRequestItem_` and `SCR_ArsenalComponent.GetFilteredArsenalItems` still exist with the same signatures and are still the arsenal request/list paths; rerun `NML_TEST_ArsenalPolicySuite` and the forged-request check
 
 ## Workshop notes
 

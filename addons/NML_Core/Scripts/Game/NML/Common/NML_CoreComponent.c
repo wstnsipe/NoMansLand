@@ -12,6 +12,7 @@ class NML_CoreComponent : SCR_BaseGameModeComponent
 	protected ResourceName m_sConfig;
 
 	protected ref NML_CoreConfig m_pConfig;
+	protected ref NML_ArsenalPolicy m_pArsenalPolicy;
 
 	//------------------------------------------------------------------------------------------------
 	//! \return the NML core component on the current game mode, or null if there is none.
@@ -29,6 +30,13 @@ class NML_CoreComponent : SCR_BaseGameModeComponent
 	NML_CoreConfig GetConfig()
 	{
 		return m_pConfig;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! \return the arsenal curation policy, or null when none is configured (curation disabled).
+	NML_ArsenalPolicy GetArsenalPolicy()
+	{
+		return m_pArsenalPolicy;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -75,6 +83,13 @@ class NML_CoreComponent : SCR_BaseGameModeComponent
 
 		m_pConfig = NML_CoreConfig.Cast(BaseContainerTools.CreateInstanceFromContainer(holder.GetResource().ToBaseContainer()));
 		if (!m_pConfig)
+		{
 			NML_Log.Error(string.Format("NML core config has the wrong class: %1", m_sConfig));
+			return;
+		}
+
+		m_pArsenalPolicy = NML_ArsenalPolicy.Load(m_pConfig.GetArsenalPolicy());
+		if (m_pArsenalPolicy && m_pArsenalPolicy.IsCurationEnabled())
+			NML_Log.Info("Arsenal curation is active.");
 	}
 }

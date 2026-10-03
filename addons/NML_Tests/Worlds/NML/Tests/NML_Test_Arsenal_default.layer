@@ -1,0 +1,49 @@
+SCR_BaseGameMode NML_TEST_ArsenalGameMode : "{1B76F75A3175E85C}Prefabs/MP/Modes/Plain/GameMode_Plain.et" {
+ components {
+  NML_CoreComponent "{6A864697282AA414}" {
+   m_sConfig "{CA9BC6FEC90F0085}Configs/NML/Tests/Arsenal/NML_TEST_CoreConfig_Arsenal.conf"
+  }
+  NML_TEST_ArsenalForgeComponent "{6A864697273A9DE6}" {
+  }
+ }
+ coords 4800 167.4 6890
+ m_aDisabledResourceTypes {
+  0
+ }
+}
+SCR_FactionManager NML_TEST_FactionManager : "{589540B35EBA8CDC}Prefabs/MP/Managers/Factions/FactionManager_USxUSSR.et" {
+ coords 4802 167.4 6890
+}
+SCR_SpawnPoint NML_TEST_SpawnPoint_USSR : "{4FEA25583D0975F7}Prefabs/MP/Spawning/SpawnPoint_USSR.et" {
+ coords 4808 167.8 6900
+}
+GenericEntity NML_TEST_Arsenal_NoFaction : "{54986385A6AF77B2}Prefabs/Props/Military/Arsenal/ArsenalBoxes/ArsenalBox_Base.et" {
+ components {
+  SCR_ArsenalComponent "{56F2C6D1431AD9AF}" {
+   m_eArsenalSaveType IN_ARSENAL_ITEMS_ONLY
+  }
+ }
+ coords 4804 167.8 6908
+}
+SCR_SpawnPoint NML_TEST_SpawnPoint_US : "{5A2220DD0C16958B}Prefabs/MP/Spawning/SpawnPoint_US.et" {
+ coords 4800 167.6 6900
+}
+SCR_LoadoutManager NML_TEST_LoadoutManager : "{97EF4C1A41F63DDB}Prefabs/MP/Managers/Loadouts/LoadoutManager_USxUSSR.et" {
+ coords 4804 167.4 6890
+}
+GenericEntity NML_TEST_Arsenal_US : "{BE99D77D1155B127}Prefabs/Props/Military/Arsenal/ArsenalBoxes/US/ArsenalBox_US.et" {
+ components {
+  SCR_ArsenalComponent "{56F2C6D1431AD9AF}" {
+   m_eArsenalSaveType IN_ARSENAL_ITEMS_ONLY
+  }
+ }
+ coords 4798 167.6 6905
+}
+GenericEntity NML_TEST_Arsenal_USSR : "{EDE6EC8B05227E3E}Prefabs/Props/Military/Arsenal/ArsenalBoxes/USSR/ArsenalBox_USSR.et" {
+ components {
+  SCR_ArsenalComponent "{56F2C6D1431AD9AF}" {
+   m_eArsenalSaveType IN_ARSENAL_ITEMS_ONLY
+  }
+ }
+ coords 4810 167.9 6905
+}

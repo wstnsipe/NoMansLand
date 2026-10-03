@@ -5,12 +5,14 @@
 # gets its own gitignored profile, so two clients can run side by side for the
 # replication smoke test: -Instance 1 and -Instance 2.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>] [-IncludeTests]
 
 param(
 	[string]$GamePath = $(if ($env:ENFUSION_GAME_PATH) { $env:ENFUSION_GAME_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger" }),
 	[string]$Server = "127.0.0.1:2001",
-	[int]$Instance = 1
+	[int]$Instance = 1,
+	# Also load NML_Tests (must match the server's -IncludeTests).
+	[switch]$IncludeTests
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +26,7 @@ New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
 
 # NML runtime addons, in load order (same as tools/server-dev.ps1).
 $nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
+if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
 $argList = @("-client", $Server, "-addonsDir", "`"$addons`"", "-addons", $nmlAddons, "-profile", "`"$profileDir`"",
 	"-window", "-screenWidth", 1280, "-screenHeight", 720, "-noFocus", "-noSplash")
 
