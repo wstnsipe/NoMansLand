@@ -25,7 +25,7 @@ Statuses: `open` · `native-planned` · `provider-pending` · `decided`
 | Grenades & mines content | open | |
 | Radio / comms | open | |
 | Drones | open | |
-| Terrain / map | provider-pending | Mangrove map (external, not yet available); dev uses a base-game terrain. |
+| Terrain / map | provider-pending | Myrove (`6A3C510B132310CA`), the intended terrain; external Workshop dependency, not yet registered ([ADR 0006](../docs/adr/0006-myrove-integration.md), proposed). DEV and tests use a base-game terrain (Everon). |
 | AI | open | |
 | Economy / trading | open | |
 | Base building | open | |

@@ -4,7 +4,7 @@ Decisions are recorded as ADRs in [adr/](adr/). This page is the overview.
 
 ## Addons
 
-See [addons/README.md](../addons/README.md) and [ADR 0001](adr/0001-addon-split.md). Core and Content never reference a world; terrain-specific data (spawn zones, loot regions, safe zones) lives in a scenario addon and is discovered at runtime by NML_Core systems through placed entities/components, not hard-coded coordinates. Mangrove's map will be an external dependency of `NML_Scenario_Mangrove` only.
+See [addons/README.md](../addons/README.md) and [ADR 0001](adr/0001-addon-split.md). Core and Content never reference a world; terrain-specific data (spawn zones, loot regions, safe zones) lives in a scenario addon and is discovered at runtime by NML_Core systems through placed entities/components, not hard-coded coordinates. The Myrove terrain will be an external Workshop dependency of `NML_Scenario_Myrove` only ([ADR 0006](adr/0006-myrove-integration.md), proposed). Everon stays the DEV/test terrain.
 
 ## Script organization
 
@@ -86,4 +86,4 @@ Server-config mod entries are `{modId, name, version?, required?}`; an omitted `
 
 ## Open decisions (safe to defer)
 
-License (interim: all rights reserved, source-visible; no reuse rights granted), Workshop publisher account, TEST/LIVE hosting, persistence backend (default: built-in Persistence System), medical system, Mangrove handoff, candidate mods.
+License (interim: all rights reserved, source-visible; no reuse rights granted), Workshop publisher account, TEST/LIVE hosting, persistence backend (default: built-in Persistence System), medical system, Myrove registration and version pins, candidate mods.
