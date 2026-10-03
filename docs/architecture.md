@@ -24,9 +24,49 @@ See [addons/README.md](../addons/README.md) and [ADR 0001](adr/0001-addon-split.
 
 A capability gets an NML_Core service facade + config-selected provider only when a decision is actually pending there (a second competing candidate appears). Current boundary: **Medical** — see [ADR 0004](adr/0004-medical-boundary.md). Integration with third-party mods lives in `NML_Compat_<Mod>` addons so mods can be adopted, swapped or dropped without restructuring Core.
 
-## Native capabilities (planned)
+## Arsenal curation (implemented, vanilla only)
 
-Arsenal curation + rank locking (on vanilla `SCR_ArsenalComponent` / `SCR_CharacterRankComponent`), persistent ranks, team balancing, spawn protection, loadout rules (e.g. grenade limits), HUD policy. See [dependencies/capabilities.md](../dependencies/capabilities.md).
+Implemented in Stage 5.3 and validated in Stage 5.4, as decided in [ADR 0005](adr/0005-arsenal-curation.md). The server decides what is obtainable from an arsenal; the client list is a courtesy filter.
+
+- **Policy:** a faction-keyed whitelist with exact `ResourceName` matching (`NML_ArsenalPolicy`), referenced from `NML_CoreConfig.m_sArsenalPolicy`.
+  - The shipped policy (`NML_Core/Configs/NML/Arsenal/NML_ArsenalPolicy.conf`) is **empty**, which means curation is disabled and vanilla behaviour is unchanged.
+  - Once any faction entry exists, curation is active and an arsenal whose faction is missing or unlisted **fails closed**: an empty list on the client and a rejection on the server, with a once-per-key `[NML]` warning.
+  - The key is the **arsenal's** assigned faction, not the player's.
+- **Enforcement points** (the only two vanilla overrides, both in `Scripts/Game/NML/Modded/`):
+  - client list: `SCR_ArsenalComponent.GetFilteredArsenalItems`;
+  - server gate: `SCR_ResourcePlayerControllerInventoryComponent.RpcAsk_ArsenalRequestItem_`. It repeats the `[RplRpc(RplChannel.Reliable, RplRcver.Server)]` attribute, rejects unlisted items before vanilla handling and logs `[NML] Rejected arsenal request: player, arsenal faction, prefab`.
+- **Test content:** vanilla US/USSR items only, in `NML_Tests` (never published): `NML_Test_Arsenal.ent` with a US, a USSR and a factionless arsenal. Procedure: [workflows](workflows.md#arsenal-curation-test-world-adr-0005).
+
+### Proof (2026-10-03)
+
+| Check | Result |
+|---|---|
+| Autotest `NML_TEST_ArsenalPolicySuite` | 9 of 9 pass: allowed items visible, banned filtered client-side, empty policy preserves vanilla, exact-match, once-per-key warning, missing or unlisted faction fails closed, server gate rejects banned, test world policy active, US/USSR separated |
+| `NML_TEST_CoreSuite`, `NML_TEST_DevScenarioSuite` | pass |
+| Dedicated diag server + two diag clients (one US, one USSR), each at the US, USSR and factionless arsenal | Each faction arsenal lists only its two allowed items. Forged banned requests (M72A3, RPG7) were rejected on the server with the correct player and arsenal faction and not delivered. Allowed requests (M855, 5.45 magazine) were delivered. The factionless arsenal listed nothing and rejected both forged requests, including the otherwise allowed magazine. |
+| Cross-faction | A USSR player at the US arsenal and a US player at the USSR arsenal saw and could request that arsenal's items, and banned requests were rejected. Policy follows the arsenal, not the player (ADR 0005 decision 6). |
+| DEV world (empty policy) | Server and client start, spawn and replicate with no script or RPC errors. The DEV world has no arsenal, so unchanged vanilla arsenal behaviour is covered by the empty-policy autotest case. |
+| Validators | `mod_validate` (NML_Core, NML_Tests), `tools/validate.mjs`, validator and guard tests pass |
+
+### Not yet implemented
+
+- real Workshop arsenal content (the shipped policy is empty and the test policy uses vanilla items);
+- rank locks and progression;
+- role and quantity limits;
+- enemy-arsenal restrictions (vanilla lets any player use any faction's arsenal);
+- loadout restrictions: faction spawn loadouts and saved arsenal loadouts;
+- modded acquisition paths (corpses, ground items, GM spawning, third-party arsenals or loadout editors);
+- Myrove integration.
+
+### Known limits
+
+- Another mod that overrides the same RPC and does not call `super`, or that loads after NML, can bypass the gate. This goes on the Phase 6 compatibility checklist.
+- Game updates can rename the RPC or add acquisition paths. Re-check after every update ([release checklist](release.md)).
+- Rejections are logged per request. Flood handling is deferred.
+
+## Other native capabilities (planned)
+
+Rank locking (on vanilla `SCR_CharacterRankComponent`), persistent ranks, team balancing, spawn protection, loadout rules (e.g. grenade limits), HUD policy. See [dependencies/capabilities.md](../dependencies/capabilities.md).
 
 ## Environments
 

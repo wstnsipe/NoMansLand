@@ -1,6 +1,6 @@
 # ADR 0005: Arsenal curation — enforcement points and faction-keyed policy
 
-- **Status:** Accepted (2026-09-30); the lead resolved the six open decisions (see "Decisions resolved by the lead"). **No arsenal code has been written yet.**
+- **Status:** Accepted (2026-09-30); the lead resolved the six open decisions (see "Decisions resolved by the lead"). **Implemented in Stage 5.3 and validated in Stage 5.4 (see "Implementation status").**
 
 ## Context
 
@@ -99,13 +99,17 @@ Only the policy membership check at the two points above, plus an `[NML]` log li
    Loadout rules and faction-access rules are Phase 6 candidates.
 4. Whitelist entries must match the catalog `ResourceName` exactly (`{GUID}path`).
 
-## Stage 5.3 implementation outline (not started)
+## Stage 5.3 implementation outline (implemented)
 
 1. `NML_Core/Scripts/Game/NML/Arsenal/NML_ArsenalPolicy.c` — policy + faction entry + membership check, including the "no entries = disabled" and fail-closed-for-unlisted/factionless rules.
 2. `NML_Core/Scripts/Game/NML/Modded/SCR_ArsenalComponent.c` and `.../Modded/SCR_ResourcePlayerControllerInventoryComponent.c`. First step: prove the RPC override works.
 3. `NML_CoreConfig.m_sArsenalPolicy` + an empty shipped `NML_Core/Configs/NML/Arsenal/NML_ArsenalPolicy.conf`.
 4. NML_Tests: the arsenal test world (placed via Workbench), test core config + test policy, `NML_TEST_ArsenalPolicySuite`, diag forge helper.
 5. `-IncludeTests` switch in `tools/server-dev.ps1` and `tools/client-dev.ps1`.
+
+## Implementation status (2026-10-03)
+
+Stage 5.3 implemented this ADR as written (PR #7, merge commit `568f363`); the `[RplRpc]` override worked, so the fallback was not needed. Stage 5.4 repeated the live check with a dedicated diag server and two diag clients, one US and one USSR. Results and the list of what is still not implemented are in [architecture.md](../architecture.md#arsenal-curation-implemented-vanilla-only). No decision in this ADR changed.
 
 ## Decisions resolved by the lead (2026-09-30)
 
