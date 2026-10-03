@@ -14,22 +14,25 @@
 # The profile (logs, saves) goes to the gitignored <repo>\.local\server\profile.
 # Ports: UDP 2001 (game), 17777 (A2S). The server listens on all interfaces.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests]
 
 param(
 	[string]$World = "",
 	[string]$Config = "",
 	[string]$ServerPath = $(if ($env:ARMA_SERVER_PATH) { $env:ARMA_SERVER_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger Server" }),
 	[int]$MaxFps = 60,
-	[switch]$ListScenarios
+	[switch]$ListScenarios,
+	# Also load NML_Tests (never published). Only for test worlds such as Worlds/NML/Tests/NML_Test_Arsenal.ent.
+	[switch]$IncludeTests
 )
 
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $addons = Join-Path $repo "addons"
 $profileDir = Join-Path $repo ".local\server\profile"
-# NML runtime addons, in load order: NML_Core, NML_Content, NML_Scenario_Dev (NML_Tests never runs on a server).
+# NML runtime addons, in load order: NML_Core, NML_Content, NML_Scenario_Dev (NML_Tests only with -IncludeTests, for test worlds).
 $nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
+if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
 
 if ($World -and $Config) { throw "Use either -World (local addons) or -Config (published builds), not both." }
 

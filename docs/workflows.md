@@ -52,6 +52,18 @@ powershell -ExecutionPolicy Bypass -File tools\autotest-dev.ps1 -Test <SuiteOrCa
 - Tests live in `NML_Tests/Scripts/Game/NML/Tests/<Area>/`. Suites inherit `SCR_AutotestSuiteBase` (override `GetWorldFile()`), cases inherit `SCR_AutotestCaseBase` with `[Test(suite: …)]` and `[TestStep(TestStage.Main)]` steps. Naming: `NML_TEST_<Feature>Suite`, `NML_TEST_<Feature>_<Case>_<Expected>`.
 - In Workbench: hover a suite/case class in the Script Editor → Plugins → Run test.
 
+### Arsenal curation test world (ADR 0005)
+
+- `NML_Tests/Worlds/NML/Tests/NML_Test_Arsenal.ent`: Everon sub-scene with vanilla US/USSR factions, one US, one USSR and one factionless arsenal, and the test arsenal policy (`NML_TEST_ArsenalPolicy_Active.conf`). Supplies are disabled on its game mode so allowed requests are not blocked by supply cost. DEV is unchanged.
+- Autotest: `tools\autotest-dev.ps1 -Test NML_TEST_ArsenalPolicySuite`.
+- Server enforcement proof (dedicated server + client, both with NML_Tests):
+  ```
+  powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 -World "Worlds/NML/Tests/NML_Test_Arsenal.ent" -IncludeTests
+  powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 -Instance 1 -IncludeTests
+  ```
+  Spawn as US. The test-only `NML_TEST_ArsenalForgeComponent` sends a forged banned request 5 s after spawn and an allowed one at 10 s (also on demand via the diag menu "NML Tests"). Expected: server log `[NML] Rejected arsenal request … M72A3`, client log `[NML_TEST] Result: … delivered=0` for the banned item and `delivered=1` for the allowed magazine.
+- `-IncludeTests` must be passed to both server and client; never use it outside test worlds.
+
 ## Local dev wrapper (`.local/NML_Dev`)
 
 Local-only and gitignored. The Enfusion MCP copies its handler scripts into the wrapper, never into `addons/`. Each developer creates `.local/NML_Dev/NML_Dev.gproj` once; use any random 16-hex `GUID` (it is never referenced):
