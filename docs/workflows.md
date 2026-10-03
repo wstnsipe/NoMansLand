@@ -56,12 +56,28 @@ powershell -ExecutionPolicy Bypass -File tools\autotest-dev.ps1 -Test <SuiteOrCa
 
 - `NML_Tests/Worlds/NML/Tests/NML_Test_Arsenal.ent`: Everon sub-scene with vanilla US/USSR factions, one US, one USSR and one factionless arsenal, and the test arsenal policy (`NML_TEST_ArsenalPolicy_Active.conf`). Supplies are disabled on its game mode so allowed requests are not blocked by supply cost. DEV is unchanged.
 - Autotest: `tools\autotest-dev.ps1 -Test NML_TEST_ArsenalPolicySuite`.
-- Server enforcement proof (dedicated server + client, both with NML_Tests):
+- Server enforcement proof (dedicated server + one or two clients, all with NML_Tests):
   ```
   powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 -World "Worlds/NML/Tests/NML_Test_Arsenal.ent" -IncludeTests
   powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 -Instance 1 -IncludeTests
+  powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 -Instance 2 -IncludeTests
   ```
-  Spawn as US. The test-only `NML_TEST_ArsenalForgeComponent` sends a forged banned request 5 s after spawn and an allowed one at 10 s (also on demand via the diag menu "NML Tests"). Expected: server log `[NML] Rejected arsenal request … M72A3`, client log `[NML_TEST] Result: … delivered=0` for the banned item and `delivered=1` for the allowed magazine.
+  Steam must be running (the diag exe fails with "SteamAPI_Init failed" otherwise). Logs: `.local\server\profile\logs\<timestamp>\console.log` and `.local\client<n>\profile\logs\<timestamp>\console.log`. Client logs can lag, so take rejections from the server log.
+- The test-only `NML_TEST_ArsenalForgeComponent` (a diag build, client side) helps:
+  - **Markers:** each arsenal gets a tall sphere pillar and a floating label: blue `US ARSENAL`, red `USSR ARSENAL`, yellow `NO-FACTION ARSENAL`. Three more yellow markers 150–250 m away are other arsenal components already in the Everon base world, not test boxes (with a policy active they also fail closed).
+  - **Automatic forges:** 5 s after a character spawns, a forged banned request and then (at 10 s) an allowed one go to the nearest arsenal. A respawn re-arms this.
+  - **Dwell trigger:** standing within 3.5 m of an arsenal for 3 s logs the list the client is shown (`[NML_TEST] Arsenal list: …`), then sends a forged banned request, and the allowed one 5 s later. Once per arsenal per character.
+  - **Diag menu "NML Tests":** the same actions on demand (list dump, forge banned, forge allowed). The Stage 5.4 run used the automatic triggers; an attempt to use the menu actions produced no log lines, and the cause was not investigated.
+- **Layout** (about 6–12 m from the spawns, around X 4800–4810, Z 6900–6908): the US box at (4798, 6905), the factionless box at (4804, 6908), the USSR box at (4810, 6905). US spawn (4800, 6900), USSR spawn (4808, 6900).
+- **Two-client check** (one US, one USSR; after a respawn, pick the faction in the deploy menu):
+
+  | Where | Expected list | Banned forge | Allowed forge |
+  |---|---|---|---|
+  | US box | M16A2, M855 magazine | M72A3 rejected, `delivered=0` | M855 `delivered=1` |
+  | USSR box | AK74, 5.45 magazine | RPG7 rejected, `delivered=0` | 5.45 `delivered=1` |
+  | Factionless box | empty | rejected (`arsenal faction none`) | also rejected |
+
+  The table holds for either player faction, because the policy follows the arsenal. Server log per rejection: `[NML] Rejected arsenal request: player <id>, arsenal faction <US|USSR|none>, prefab <name>`. The `faction 'none'` warning appears once per server process.
 - `-IncludeTests` must be passed to both server and client; never use it outside test worlds.
 
 ## Local dev wrapper (`.local/NML_Dev`)

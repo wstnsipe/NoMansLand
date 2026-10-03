@@ -14,7 +14,7 @@ All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_
 - Do not vendor or modify third-party mods.
 - Dependency changes require lead approval.
 - Architecture changes require lead approval/ADR.
-- Stage 5.3 must not start without explicit lead approval.
+- Each phase stage is a gate: the next stage starts only with explicit lead approval.
 - GitHub `main`, accepted ADRs, and this workboard are the source of truth.
 
 ---
@@ -44,7 +44,9 @@ All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_
 
 ### Current
 - [x] Phase 5.2 complete
-- [ ] Stage 5.3 — BLOCKED until explicit approval
+- [x] Stage 5.3 complete (PR #7, `568f363`)
+- [x] Stage 5.4 two-client validation and docs done; PR awaiting Weston's review
+- [ ] Stage 5 close-out: Stage 5.4 PR merged
 - [ ] Finalize V1 dependency set
 - [ ] Finalize V1 arsenal inputs
 
@@ -114,7 +116,8 @@ All AI-assisted work must also follow [docs/AI_OPERATING_RULES.md](AI_OPERATING_
 
 | Task | Owner | Branch | Scope | Status |
 |---|---|---|---|---|
-| Stage 5.3 Arsenal implementation | Weston | — | NML_Core arsenal system | BLOCKED |
+| Stage 5.3 Arsenal implementation | Weston | `feat/arsenal-curation` | NML_Core arsenal system | Merged (PR #7) |
+| Stage 5.4 Arsenal validation + docs | Weston | `test/stage-5.4-two-client-validation` | NML_Tests helper, architecture/capability docs | In review |
 | Myrove evaluation | TBD | — | Workshop dependency research | Planned |
 | V1 arsenal research | Cornelius/FRIT split | — | Resource discovery only | Planned |
 

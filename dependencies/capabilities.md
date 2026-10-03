@@ -7,7 +7,7 @@ Statuses: `open` · `native-planned` · `provider-pending` · `decided`
 | Capability | Status | Notes |
 |---|---|---|
 | Medical | provider-pending | Behind the NML_Core medical boundary ([ADR 0004](../docs/adr/0004-medical-boundary.md)). Candidates: ACE Medical, ATS, TCCC, native. |
-| Arsenal curation + rank locking | native-planned | Config whitelist + rank gating over any mod's items; vanilla `SCR_ArsenalComponent`, `SCR_CharacterRankComponent`. |
+| Arsenal curation | decided | Implemented natively (Stage 5.3, validated Stage 5.4, [ADR 0005](../docs/adr/0005-arsenal-curation.md)): faction-keyed config whitelist, server-authoritative, vanilla content only; the shipped policy is empty. Rank locking stays native-planned (`SCR_CharacterRankComponent`). See [architecture](../docs/architecture.md#arsenal-curation-implemented-vanilla-only) for what is not implemented yet. |
 | Persistence | native-planned | Default backend: built-in Persistence System. |
 | Ranks / progression | native-planned | Built on NML persistence (replaces FTAPersistentRanks idea). |
 | Team balancing | native-planned | Server-authoritative. |
