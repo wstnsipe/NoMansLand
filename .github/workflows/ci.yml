@@ -23,6 +23,10 @@ jobs:
         run: node tools/tests/validate.test.mjs
       - name: Claude guard hook tests
         run: node tools/tests/guard.test.mjs
+      - name: Mod list generator tests
+        run: node tools/tests/modlist.test.mjs
+      - name: Log scanner tests
+        run: node tools/tests/log-scan.test.mjs
       - name: Validate repository
         run: node tools/validate.mjs --ci
       - name: Candidate index is current

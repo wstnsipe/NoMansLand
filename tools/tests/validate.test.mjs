@@ -15,6 +15,23 @@ const gproj = (id, guid, deps = [BASE]) =>
 	`GameProject {\n ID "${id}"\n GUID "${guid}"\n TITLE "${id}"\n Dependencies {\n${deps.map((d) => `  "${d}"`).join("\n")}\n }\n}\n`;
 const registryEmpty = JSON.stringify({ schemaVersion: 1, mods: [] });
 
+// Registry fixtures: T (terrain) requires D (dependency); E is never registered.
+const T = "1A1A1A1A1A1A1A1A";
+const D = "2B2B2B2B2B2B2B2B";
+const E = "3C3C3C3C3C3C3C3C";
+const approved = (name) => `---\nname: ${name}\nstatus: approved\ncategory: content\nproposedBy: m\nproposedOn: 2026-09-30\napprovedBy: wstnsipe\n---\n`;
+const entry = (id, name, extra = {}) => ({
+	name, modId: id, version: "1.0.0", purpose: "p", required: true, scope: "scenario", channel: "stable", licenseClass: "APL", sizeMB: 1,
+	candidate: `candidates/${name}.md`, approvedBy: "wstnsipe", approvedOn: "2026-10-01", ...extra,
+});
+// Tree overrides that register `mods` (each needs an approved candidate file).
+const registerMods = (mods) => ({
+	"dependencies/mods.json": JSON.stringify({ schemaVersion: 1, mods }),
+	...Object.fromEntries(mods.map((m) => [`dependencies/${m.candidate}`, approved(m.name)])),
+});
+const goodPair = [entry(T, "Terrain", { requires: [D] }), entry(D, "Dep", { requiredBy: [T] })];
+const testConfig = (...ids) => JSON.stringify({ game: { mods: ids.map((id) => ({ modId: id, name: id, version: "1.0.0" })) } });
+
 // Minimal valid tree; each case overrides/adds files.
 function baseTree()
 {
@@ -110,6 +127,38 @@ const cases = [
 		"addons/NML_Core/Worlds/NML/W/W.ent": "SubScene {\n}\n",
 		"addons/NML_Core/Worlds/NML/W/W_Layers/default.layer": "",
 	}, 1, /resource has no \.meta.*W\.ent/],
+
+	// ---- Stage 6.3: licence class, registry closure, TEST/LIVE completeness, scenario closure
+	["APL-SA licenseClass passes", registerMods([entry(D, "Dep", { licenseClass: "APL-SA" })]), 0, null],
+	["unknown licenseClass fails", registerMods([entry(D, "Dep", { licenseClass: "APL-XX" })]), 1, /licenseClass must be GPL\|APL\|APL-SA\|APL-ND\|custom/],
+	["valid requires/requiredBy closure passes", registerMods(goodPair), 0, null],
+	["requires an unregistered mod fails", registerMods([entry(T, "Terrain", { requires: [E] })]), 1, /requires 3C3C3C3C3C3C3C3C, which is not registered/],
+	["requires without matching requiredBy fails", registerMods([entry(T, "Terrain", { requires: [D] }), entry(D, "Dep")]), 1, /its requiredBy does not list 1A1A1A1A1A1A1A1A/],
+	["requiredBy without matching requires fails", registerMods([entry(T, "Terrain"), entry(D, "Dep", { requiredBy: [T] })]), 1, /its requires does not list 2B2B2B2B2B2B2B2B/],
+	["dependency cycle fails", registerMods([entry(T, "Terrain", { requires: [D], requiredBy: [D] }), entry(D, "Dep", { requires: [T], requiredBy: [T] })]), 1, /dependency cycle/],
+	["malformed requires id fails", registerMods([entry(T, "Terrain", { requires: ["XYZ"] })]), 1, /requires entry "XYZ" must be 16 uppercase hex/],
+	["complete TEST closure passes", { ...registerMods(goodPair), "server/configs/test.template.json": testConfig(T, D) }, 0, null],
+	["incomplete TEST closure fails", { ...registerMods(goodPair), "server/configs/test.template.json": testConfig(T) }, 1, /test\.template\.json: mod 2B2B2B2B2B2B2B2B \(Dep\) is required by a listed mod but missing/],
+	["incomplete LIVE closure fails", { ...registerMods(goodPair), "server/configs/live.template.json": testConfig(T) }, 1, /live\.template\.json: mod 2B2B2B2B2B2B2B2B \(Dep\) is required/],
+	["unpinned dev config needs no closure", { ...registerMods(goodPair), "server/configs/dev.json": JSON.stringify({ game: { mods: [{ modId: T, name: "Terrain" }] } }) }, 0, null],
+	["TEST list with a scenario addon but not its terrain fails", {
+		...registerMods(goodPair),
+		"addons/NML_Scenario_X/NML_Scenario_X.gproj": gproj("NML_Scenario_X", "4444444444444444", [BASE, "1111111111111111", T]),
+		"server/configs/test.template.json": testConfig("1111111111111111", "4444444444444444"),
+	}, 1, /test\.template\.json: mod 1A1A1A1A1A1A1A1A \(Terrain\) is required by a listed mod but missing/],
+	["TEST list with a scenario addon and its full closure passes", {
+		...registerMods(goodPair),
+		"addons/NML_Scenario_X/NML_Scenario_X.gproj": gproj("NML_Scenario_X", "4444444444444444", [BASE, "1111111111111111", T]),
+		"server/configs/test.template.json": testConfig("1111111111111111", "4444444444444444", T, D),
+	}, 0, null],
+	["scenario gproj with complete closure passes", {
+		...registerMods(goodPair),
+		"addons/NML_Scenario_X/NML_Scenario_X.gproj": gproj("NML_Scenario_X", "4444444444444444", [BASE, "1111111111111111", T]),
+	}, 0, null],
+	["scenario gproj with incomplete closure fails", {
+		...registerMods([entry(T, "Terrain", { requires: [E] })]),
+		"addons/NML_Scenario_X/NML_Scenario_X.gproj": gproj("NML_Scenario_X", "4444444444444444", [BASE, "1111111111111111", T]),
+	}, 1, /NML_Scenario_X: dependency closure incomplete: 1A1A1A1A1A1A1A1A requires 3C3C3C3C3C3C3C3C/],
 ];
 
 let fail = 0;

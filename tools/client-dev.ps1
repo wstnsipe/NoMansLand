@@ -5,14 +5,16 @@
 # gets its own gitignored profile, so two clients can run side by side for the
 # replication smoke test: -Instance 1 and -Instance 2.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>] [-IncludeTests]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>] [-IncludeTests] [-Scenario <name>]
 
 param(
 	[string]$GamePath = $(if ($env:ENFUSION_GAME_PATH) { $env:ENFUSION_GAME_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger" }),
 	[string]$Server = "127.0.0.1:2001",
 	[int]$Instance = 1,
 	# Also load NML_Tests (must match the server's -IncludeTests).
-	[switch]$IncludeTests
+	[switch]$IncludeTests,
+	# Must match the server's -Scenario (see tools/server-dev.ps1). Default is unchanged.
+	[string]$Scenario = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,7 +29,15 @@ New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
 # NML runtime addons, in load order (same as tools/server-dev.ps1).
 $nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
 if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
-$argList = @("-client", $Server, "-addonsDir", "`"$addons`"", "-addons", $nmlAddons, "-profile", "`"$profileDir`"",
+$addonsDirArg = $addons
+if ($Scenario) {
+	. (Join-Path $PSScriptRoot "lib\nml-scenario.ps1")
+	$sc = Resolve-NmlScenario -Repo $repo -Name $Scenario
+	$nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,$($sc.Guid)"
+	if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
+	$addonsDirArg = $sc.AddonsDir
+}
+$argList = @("-client", $Server, "-addonsDir", "`"$addonsDirArg`"", "-addons", $nmlAddons, "-profile", "`"$profileDir`"",
 	"-window", "-screenWidth", 1280, "-screenHeight", 720, "-noFocus", "-noSplash")
 
 Write-Host "Starting client $Instance -> $Server`n  exe:     $exe`n  profile: $profileDir"

@@ -29,7 +29,7 @@ Only after the lead sets `status: approved` and `approvedBy`:
 
 ## Registry entry fields
 
-`name`, `modId` (16 hex GUID), `version` (X.Y.Z), `purpose`, `required`, `scope` (core|content|scenario|server-only), `channel` (stable|dev), `licenseClass` (GPL|APL|APL-ND|custom), `usageRestriction` + `permissionRecord` if restricted, `sizeMB`, `builtForGameVersion`, `lastUpdated`, `requires` / `requiredBy`, `loadOrder`, `compatibilityNotes`, `testedWithNML`, `referenceServers`, `candidate`, `approvedBy`, `approvedOn`, optional `liveDevChannelApproved`.
+`name`, `modId` (16 hex GUID), `version` (X.Y.Z), `purpose`, `required`, `scope` (core|content|scenario|server-only), `channel` (stable|dev), `licenseClass` (GPL|APL|APL-SA|APL-ND|custom), `usageRestriction` + `permissionRecord` if restricted, `sizeMB`, `builtForGameVersion`, `lastUpdated`, `requires` / `requiredBy`, `loadOrder`, `compatibilityNotes`, `testedWithNML`, `referenceServers`, `candidate`, `approvedBy`, `approvedOn`, optional `liveDevChannelApproved`.
 
 ## Policies (enforced by `tools/validate.mjs`)
 
@@ -37,4 +37,6 @@ Only after the lead sets `status: approved` and `approvedBy`:
 - No usage-restricted mod without a `permissionRecord`.
 - No Dev-channel mod on LIVE unless `liveDevChannelApproved`.
 - TEST/LIVE configs pin every mod version (omitted = latest).
+- `requires` / `requiredBy` are arrays of 16-hex GUIDs. Every registered mod's `requires` must be registered, and both sides of an edge must agree (`A.requires` lists `B` exactly when `B.requiredBy` lists `A`); no cycles.
+- A pinned TEST/LIVE config must list the complete registered closure of every mod it lists, and a scenario `.gproj`'s registered dependencies must have a complete registered closure.
 - GPL mods are fine as dependencies; any derivative work must be GPL (separate addon/repo). APL-ND: dependency only.

@@ -14,7 +14,7 @@
 # The profile (logs, saves) goes to the gitignored <repo>\.local\server\profile.
 # Ports: UDP 2001 (game), 17777 (A2S). The server listens on all interfaces.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests] [-Scenario <name>]
 
 param(
 	[string]$World = "",
@@ -23,7 +23,10 @@ param(
 	[int]$MaxFps = 60,
 	[switch]$ListScenarios,
 	# Also load NML_Tests (never published). Only for test worlds such as Worlds/NML/Tests/NML_Test_Arsenal.ent.
-	[switch]$IncludeTests
+	[switch]$IncludeTests,
+	# Load another scenario addon (e.g. Myrove) instead of NML_Scenario_Dev. Its third-party Workshop
+	# closure is read from .local\workshop (tools\workshop-sync.ps1). World mode only; default is unchanged.
+	[string]$Scenario = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,9 +39,21 @@ if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
 
 if ($World -and $Config) { throw "Use either -World (local addons) or -Config (published builds), not both." }
 
+# -Scenario swaps NML_Scenario_Dev for the named scenario addon and adds .local\workshop\addons to -addonsDir
+# (comma separated list) when that scenario has third-party dependencies. Without it nothing changes.
+$addonsDirArg = $addons
+if ($Scenario) {
+	if (-not $World) { throw "-Scenario needs -World (world mode)." }
+	. (Join-Path $PSScriptRoot "lib\nml-scenario.ps1")
+	$sc = Resolve-NmlScenario -Repo $repo -Name $Scenario
+	$nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,$($sc.Guid)"
+	if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
+	$addonsDirArg = $sc.AddonsDir
+}
+
 if ($World) {
 	$exe = Join-Path $ServerPath "ArmaReforgerServerDiag.exe"
-	$argList = @("-server", "`"$World`"", "-addonsDir", "`"$addons`"", "-addons", $nmlAddons,
+	$argList = @("-server", "`"$World`"", "-addonsDir", "`"$addonsDirArg`"", "-addons", $nmlAddons,
 		"-bindPort", 2001, "-a2sPort", 17777, "-profile", "`"$profileDir`"", "-maxFPS", $MaxFps)
 	$source = "world $World"
 } else {
