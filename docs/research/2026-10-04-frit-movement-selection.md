@@ -23,6 +23,14 @@ Fresh Workbench loading, compilation, ADS/recoil behavior, TAO animation retenti
 
 ## Handoff to Weston/Claude
 
+### Camera additions requested after the initial selection
+
+The member subsequently requested both downloaded camera packages. BWI Camera Adjustments 2.0 (`66489CC231155B78`, same project GUID) version 2.0.3 and BWICamera Fix (`6A770A0F54F1AEDE`, same project GUID) version 1.0.3 are now selected in the local addon and test package lock. Adjustments directly requires only the base game. Fix directly requires base game, BWI 2.8, Camera Adjustments and TAO; all prerequisites are already present and their closure adds no other packages.
+
+Inspection of the external fix script shows two intended fixes: clamp the controller control-update time slice to at least 0.0001 to avoid zero-time divisions, and provide TAO deadzone/freelook settings callback methods. These are observed implementation intentions, not demonstrated runtime fixes. Camera Adjustments contains weapon aim modifiers and camera/controller scripts, including ADS sway, weapon inertia and deadzone settings. No third-party code is reproduced here.
+
+Static validation after both additions passed: 120 external packages, complete dependency closure, 141 parsed resources and 162 checked local references. Arsenal counts are unchanged. Both projects are registered locally. Fresh Workbench compile and gameplay testing remain pending; test ADS, firing, freelook, vehicle camera and settings changes before production consideration.
+
 Ready: exact installed versions, dependency identities, member-directed selection and overlap findings. Incomplete: runtime compatibility and multiplayer testing. Next: restart Workbench and compare ADS, firing and animations using the shared vanilla weapons and selected mod weapons. Do not integrate these candidates into NML production yet.
 
 ## Remaining Weston decisions
