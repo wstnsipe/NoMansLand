@@ -19,7 +19,7 @@ Downloaded package project files and ServerData metadata were read directly. Loc
 
 Package resource-path comparison found 13 weapon prefab paths shared by Better Weapon Immersion and TAO: M9, PM, RPG7, M249, M60, PKM, RPK74, UK59, AK74, M21, M16A2, SVD and VZ58 base prefabs. This establishes overlapping overrides, not a confirmed incompatibility or a successful merge. Neither addition shared resource paths with Best Body Cam; Immersive Head Movement shared none with TAO. Script behavior can still interact without shared paths.
 
-Fresh Workbench loading, compilation, ADS/recoil behavior, TAO animation retention, bodycam/head movement interaction, and multiplayer verification remain pending. The Workbench API connection was unavailable during this change. Static validation is not gameplay verification.
+During installation, fresh Workbench loading, compilation, ADS/recoil behavior, TAO animation retention, bodycam/head movement interaction, and multiplayer verification were pending. The Workbench API connection was unavailable during this change. Static validation is not gameplay verification. The subsequent member report below updates the local gameplay status without establishing individual-feature or multiplayer verification.
 
 ## Handoff to Weston/Claude
 
@@ -29,9 +29,13 @@ The member subsequently requested both downloaded camera packages. BWI Camera Ad
 
 Inspection of the external fix script shows two intended fixes: clamp the controller control-update time slice to at least 0.0001 to avoid zero-time divisions, and provide TAO deadzone/freelook settings callback methods. These are observed implementation intentions, not demonstrated runtime fixes. Camera Adjustments contains weapon aim modifiers and camera/controller scripts, including ADS sway, weapon inertia and deadzone settings. No third-party code is reproduced here.
 
-Static validation after both additions passed: 120 external packages, complete dependency closure, 141 parsed resources and 162 checked local references. Arsenal counts are unchanged. Both projects are registered locally. Fresh Workbench compile and gameplay testing remain pending; test ADS, firing, freelook, vehicle camera and settings changes before production consideration.
+Static validation after both additions passed: 120 external packages, complete dependency closure, 141 parsed resources and 162 checked local references. Arsenal counts are unchanged. Both projects are registered locally.
 
-Ready: exact installed versions, dependency identities, member-directed selection and overlap findings. Incomplete: runtime compatibility and multiplayer testing. Next: restart Workbench and compare ADS, firing and animations using the shared vanilla weapons and selected mod weapons. Do not integrate these candidates into NML production yet.
+### Member-reported test result
+
+On 2026-10-04, after being asked to restart Workbench and test the selected stack, FRIT reported: "it works". Record this as a **user-reported local gameplay pass** for the selected movement/camera setup. The agent did not independently observe the test or obtain a new compile log. The report does not separately establish ADS, firing, freelook, vehicle camera, settings callbacks, every weapon override or two-client multiplayer compatibility. Those focused checks remain necessary before production consideration.
+
+Ready: exact installed versions, dependency identities, member-directed selection, overlap findings and user-reported local gameplay pass. Incomplete: independently observed feature coverage and multiplayer testing. Next: targeted ADS, firing and animation checks using shared vanilla weapons and selected mod weapons, followed by two-client testing. Do not integrate these candidates into NML production yet.
 
 ## Remaining Weston decisions
 
