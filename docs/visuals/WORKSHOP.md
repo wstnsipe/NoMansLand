@@ -25,6 +25,16 @@ Known limitations: no fisheye distortion, no codec compression, no motion blur, 
 
 Version 1.0.0.
 
+## Publish steps (lead only; needs the Bohemia account)
+
+File > Publish Project (Workbench) publishes the project that is open. Open NML_Visuals itself, never the NML_Dev wrapper.
+
+1. Close Workbench.
+2. Run: `powershell -ExecutionPolicy Bypass -File tools/wb-dev.ps1 -Project addons/NML_Visuals/NML_Visuals.gproj -NoWait` (Workbench opens with NML_Visuals as the project).
+3. First time only: File > Login, sign in with the Bohemia account (needed for publishing).
+4. File > Publish Project. Fill the fields below, then publish.
+5. Note the Workshop ID shown after publishing (also in the item's Workshop URL) and the visibility chosen.
+
 ## Settings to use in the Workbench publish dialog
 
 - Project: `NML_Visuals` (`addons/NML_Visuals/NML_Visuals.gproj`, GUID `81E04280BF506AF2`)
