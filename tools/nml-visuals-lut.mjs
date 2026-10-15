@@ -126,7 +126,14 @@ function main(argv) {
 		fs.mkdirSync(outDir, { recursive: true });
 		for (const f of fs.readdirSync(specDir).filter((n) => n.endsWith(".json")).sort()) {
 			const out = path.join(outDir, `NML_Visuals_${path.basename(f, ".json")}_LUT.png`);
-			fs.writeFileSync(out, buildLut(JSON.parse(fs.readFileSync(path.join(specDir, f), "utf8"))));
+			const png = buildLut(JSON.parse(fs.readFileSync(path.join(specDir, f), "utf8")));
+			// Unchanged files are skipped: committed textures are LFS-lockable and read-only until locked.
+			if (fs.existsSync(out) && fs.readFileSync(out).equals(png)) {
+				console.log(`unchanged ${path.relative(repo, out)}`);
+				continue;
+			}
+
+			fs.writeFileSync(out, png);
 			console.log(`wrote ${path.relative(repo, out)}`);
 		}
 		return 0;

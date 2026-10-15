@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{4AE596C1EBC1BC9B}Textures/NML/Visuals/NML_Visuals_Extreme_LUT.edds"
+ Configurations {
+  PNGResourceClass PC : "{FDA8724761A5E880}Configs/System/ResourceTypes/PC/TextureLut.conf" {
+  }
+  PNGResourceClass XBOX_ONE : "{9AE8215636729E7A}Configs/System/ResourceTypes/XBOX_ONE/TextureLut.conf" {
+  }
+  PNGResourceClass XBOX_SERIES : "{CBB7E88AA7DE5748}Configs/System/ResourceTypes/XBOX_SERIES/TextureLut.conf" {
+  }
+  PNGResourceClass PS4 : "{F34906600DC4FE84}Configs/System/ResourceTypes/PS4/TextureLut.conf" {
+  }
+  PNGResourceClass PS5 : "{5D15FD30EDF58E3B}Configs/System/ResourceTypes/PS5/TextureLut.conf" {
+  }
+  PNGResourceClass HEADLESS : "{3D6CF9FDEC095638}Configs/System/ResourceTypes/HEADLESS/TextureLut.conf" {
+  }
+ }
+}

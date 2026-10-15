@@ -1,12 +1,12 @@
 {
-	"_comment": "AUTHENTIC daylight, matched to helmet-cam references: bright lifted mids (day only), dense-but-not-black shadows, hard highlight clip (blown skies/windows), real colour preserved, olive foliage, pale cyan sky, neutral-cool white balance.",
-	"curve": [[0, 0.02], [0.15, 0.2], [0.35, 0.46], [0.55, 0.66], [0.75, 0.86], [0.86, 0.97], [1, 1]],
-	"clip": 0.93,
-	"whiteBalance": [0.98, 1.0, 1.02],
-	"saturation": 0.95,
+	"_comment": "AUTHENTIC daylight: lighter version of the EXTREME colour identity (the family anchor). Same palette, pale cyan sky and olive foliage; a little less mid lift than EXTREME and a softer top end, so the sun disc keeps some structure. Deep toe: true black, deep shadows at or just below OFF (points 0.286/0.401 sit on the engine LUT lattice, which samples linear k/15).",
+	"curve": [[0, 0], [0.286, 0.26], [0.401, 0.5], [0.55, 0.68], [0.72, 0.85], [0.86, 0.94], [1, 1]],
+	"clip": 0.985,
+	"whiteBalance": [0.975, 1.0, 1.025],
+	"saturation": 0.92,
 	"hueBands": [
-		{ "center": 110, "width": 55, "hueShift": -12, "saturation": 0.85 },
-		{ "center": 25, "width": 35, "hueShift": 0, "saturation": 0.95 },
-		{ "center": 215, "width": 40, "hueShift": -15, "saturation": 0.55 }
+		{ "center": 110, "width": 55, "hueShift": -14, "saturation": 0.8 },
+		{ "center": 25, "width": 35, "hueShift": 0, "saturation": 0.88 },
+		{ "center": 215, "width": 40, "hueShift": -18, "saturation": 0.42 }
 	]
 }

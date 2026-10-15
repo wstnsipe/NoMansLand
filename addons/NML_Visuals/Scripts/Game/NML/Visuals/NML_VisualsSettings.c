@@ -8,12 +8,9 @@ class NML_VisualsSettings : ModuleGameSettings
 	[Attribute("2", desc: "Look preset", enums: ParamEnumArray.FromEnum(NML_EVisualsPreset))]
 	int m_iPreset;
 
-	[Attribute("1", desc: "Film grain")]
-	bool m_bGrain;
-
 	[Attribute("1", desc: "Vignette and grime overlays")]
 	bool m_bVignette;
 
-	[Attribute("1", desc: "Chromatic fringing, softness and turn motion blur")]
+	[Attribute("1", desc: "Chromatic fringing")]
 	bool m_bLens;
 }

@@ -2,14 +2,14 @@
 //! Started from the modded ArmaReforgerScripted.OnWorldPostProcess and polled on the game call queue.
 //!
 //! Stack (own materials, own slots after vanilla's 5-8: Colors 5, RadialBlur 6, GaussFilter 7, DOF 8):
-//!   10 ColorGrading  LUT: tone curve + colour (Day, or LowLight with no black lift)
+//!   10 ColorGrading  LUT: tone curve + colour (preset day LUT, or the shared LowLight LUT with no black lift)
 //!   11 Colors        live saturation trim, driven by preset x weather x time (tone lives in the LUT:
 //!                    Colors contrast/brightness act on linear values and crush blacks)
 //!   13 ChromAber     edge fringing
-//!   15 GaussFilter   softness
-//!   16 RotBlur       motion blur on fast turns
-//!   17 FilmGrain     sensor noise, stronger in the dark
 //! plus vignette and grime overlays under the HUD. OFF clears our slots only, restoring whatever is underneath.
+//! Not used: GaussFilter (uniform blur; its Mask gave no edge-only softness), RotBlur (blacked out the
+//! frame) on game 1.8.0.13, and FilmGrain (reads as flat film grain, removed at the lead's request).
+//! Players change settings in the pause-menu panel (NML_VisualsPanel).
 class NML_VisualsManager
 {
 	static const string SETTINGS_MODULE = "NML_VisualsSettings";
@@ -17,9 +17,6 @@ class NML_VisualsManager
 	static const int PRIORITY_LUT = 10;
 	static const int PRIORITY_TRIM = 11;
 	static const int PRIORITY_FRINGE = 13;
-	static const int PRIORITY_SOFT = 15;
-	static const int PRIORITY_MOTION = 16;
-	static const int PRIORITY_GRAIN = 17;
 
 	// Camera, world, menu and respawn changes are picked up within POLL_MS; weather/time is sampled every
 	// WEATHER_POLLS polls and blended towards its target by BLEND per sample (about 5 s to settle).
@@ -32,14 +29,10 @@ class NML_VisualsManager
 	// If Colormod is fixed, retune NML_Visuals_Grade_Colormod.emat against it (ADR 0007).
 	protected static const string COLORMOD_GUID = "65A2EA40DC9E632A";
 
-	protected static const ResourceName LUT_DAY = "{6A7CD3BFB176F91B}Materials/NML/Visuals/NML_Visuals_Lut_Day.emat";
 	protected static const ResourceName LUT_LOWLIGHT = "{14900DAD97099BE4}Materials/NML/Visuals/NML_Visuals_Lut_LowLight.emat";
 	protected static const ResourceName TRIM_OVER_COLORMOD = "{086A86D87F5B514C}Materials/NML/Visuals/NML_Visuals_Grade_Colormod.emat";
 	protected static const ResourceName TRIM_OVER_VANILLA = "{0DAD025814CB44FC}Materials/NML/Visuals/NML_Visuals_Grade_Vanilla.emat";
 	protected static const ResourceName FRINGE = "{D6019ABBD9351FA0}Materials/NML/Visuals/NML_Visuals_Fringe.emat";
-	protected static const ResourceName SOFT = "{784C8E5A0144062A}Materials/NML/Visuals/NML_Visuals_Soft.emat";
-	protected static const ResourceName MOTION = "{181864A5BB164FC8}Materials/NML/Visuals/NML_Visuals_Motion.emat";
-	protected static const ResourceName GRAIN = "{8E07B73376891360}Materials/NML/Visuals/NML_Visuals_Grain.emat";
 	protected static const ResourceName OVERLAY_LAYOUT = "{7963C16C11AEF0F5}UI/Layouts/NML/Visuals/NML_VisualsOverlay.layout";
 
 #ifdef ENABLE_DIAG
@@ -47,7 +40,6 @@ class NML_VisualsManager
 	protected static const int DIAG_MENU = 500;
 	protected static const int DIAG_ENABLED = 501;
 	protected static const int DIAG_PRESET = 502;
-	protected static const int DIAG_GRAIN = 503;
 	protected static const int DIAG_VIGNETTE = 504;
 	protected static const int DIAG_LENS = 505;
 	protected static const string DIAG_MENU_NAME = "NML Visuals";
@@ -55,6 +47,7 @@ class NML_VisualsManager
 	protected bool m_bGrimeKeyDown;
 	protected bool m_bGrimeReview;		// F6: show grime even when the preset has none (review only)
 	protected string m_sDiagOnly;		// -nmlVisualsOnly <layer>: apply just one layer (diagnostics)
+	protected int m_iDiagPreset = -1;	// -nmlVisualsPreset <name>: session-only preset (diagnostics)
 #endif
 
 	protected static ref NML_VisualsManager s_Instance;
@@ -64,7 +57,6 @@ class NML_VisualsManager
 	protected bool m_bEnabled = true;
 	protected NML_EVisualsPreset m_ePreset = NML_EVisualsPreset.AUTHENTIC;
 	protected NML_EVisualsPreset m_eLastActivePreset = NML_EVisualsPreset.AUTHENTIC;
-	protected bool m_bGrain = true;
 	protected bool m_bVignette = true;
 	protected bool m_bLens = true;
 	protected bool m_bColormodLoaded;
@@ -89,10 +81,7 @@ class NML_VisualsManager
 
 	// Last values pushed to the materials, to skip redundant SetParam calls
 	protected float m_fSetSaturation = -1;
-	protected float m_fSetGrain = -1;
 	protected float m_fSetFringe = -1;
-	protected float m_fSetSoft = -1;
-	protected float m_fSetMotion = -1;
 
 	// Overlay
 	protected Widget m_wOverlay;
@@ -100,6 +89,10 @@ class NML_VisualsManager
 	protected bool m_bOverlayOnWorkspace;
 	protected ImageWidget m_wVignette;
 	protected ImageWidget m_wGrime;
+	protected ImageWidget m_wGrimeHeavy;
+
+	// Player controls in the pause menu
+	protected ref NML_VisualsPanel m_Panel;
 
 	//------------------------------------------------------------------------------------------------
 	//! Called when a world has loaded. Creates the manager once and (re)starts its poll.
@@ -133,6 +126,7 @@ class NML_VisualsManager
 
 		LoadSettings();
 		GetGame().OnUserSettingsChangedInvoker().Insert(OnUserSettingsChanged);
+		m_Panel = new NML_VisualsPanel(this);
 
 #ifdef ENABLE_DIAG
 		RegisterDiag();
@@ -143,13 +137,37 @@ class NML_VisualsManager
 		if (!System.GetCLIParam("nmlVisualsCycle", cycle))
 			System.GetCLIParam("nmlvisualscycle", cycle);
 
-		// -nmlVisualsOnly lut|trim|fringe|soft|motion|grain|overlay applies only that layer (diagnostics).
+		// -nmlVisualsOnly lut|trim|fringe|overlay applies only that layer (diagnostics).
 		System.GetCLIParam("nmlVisualsOnly", m_sDiagOnly);
 		if (m_sDiagOnly.IsEmpty())
 			System.GetCLIParam("nmlvisualsonly", m_sDiagOnly);
 
 		if (!m_sDiagOnly.IsEmpty())
 			PrintFormat("[NML] Visuals: diag only layer %1", m_sDiagOnly);
+
+		// -nmlVisualsPreset LOW|AUTHENTIC|HEAVY|EXTREME forces a preset for this session without saving it.
+		string forced;
+		if (!System.GetCLIParam("nmlVisualsPreset", forced))
+			System.GetCLIParam("nmlvisualspreset", forced);
+
+		int forcedPreset = -1;
+		if (!forced.IsEmpty())
+			forcedPreset = typename.StringToEnum(NML_EVisualsPreset, forced);
+
+		if (forcedPreset > NML_EVisualsPreset.OFF)
+		{
+			m_iDiagPreset = forcedPreset;
+			ApplyDiagPreset();
+			PrintFormat("[NML] Visuals: diag preset %1", forced);
+		}
+
+		// -nmlVisualsPauseAt <seconds> opens the pause menu once (to check the player panel without input).
+		string pauseAt;
+		if (!System.GetCLIParam("nmlVisualsPauseAt", pauseAt))
+			System.GetCLIParam("nmlvisualspauseat", pauseAt);
+
+		if (!pauseAt.IsEmpty() && pauseAt.ToInt() > 0)
+			GetGame().GetCallqueue().CallLater(ArmaReforgerScripted.OpenPauseMenu, pauseAt.ToInt() * 1000, false, true, false);
 
 		if (!cycle.IsEmpty() && cycle.ToInt() > 0) // ToInt() throws on an empty string
 		{
@@ -175,6 +193,8 @@ class NML_VisualsManager
 		}
 
 		DestroyOverlay();
+		if (m_Panel)
+			m_Panel.Destroy();
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -197,7 +217,6 @@ class NML_VisualsManager
 		int preset;
 		module.Get("m_bEnabled", m_bEnabled);
 		module.Get("m_iPreset", preset);
-		module.Get("m_bGrain", m_bGrain);
 		module.Get("m_bVignette", m_bVignette);
 		module.Get("m_bLens", m_bLens);
 
@@ -212,6 +231,7 @@ class NML_VisualsManager
 		m_bDirty = true;
 
 #ifdef ENABLE_DIAG
+		ApplyDiagPreset(); // a -nmlVisualsPreset session override survives settings reloads
 		PushDiag(); // settings changed elsewhere: the diag menu follows, it never overrides them
 #endif
 	}
@@ -225,7 +245,6 @@ class NML_VisualsManager
 
 		module.Set("m_bEnabled", m_bEnabled);
 		module.Set("m_iPreset", m_ePreset);
-		module.Set("m_bGrain", m_bGrain);
 		module.Set("m_bVignette", m_bVignette);
 		module.Set("m_bLens", m_bLens);
 		GetGame().UserSettingsChanged();
@@ -239,6 +258,8 @@ class NML_VisualsManager
 		PollDiag();
 		PollKeys();
 #endif
+
+		m_Panel.Update();
 
 		BaseWorld world = GetGame().GetWorld();
 		if (world != m_pWorld)
@@ -296,6 +317,55 @@ class NML_VisualsManager
 			return null;
 
 		return NML_VisualsPreset.Get(m_ePreset);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Player controls (NML_VisualsPanel). Each change is saved to the player profile.
+	string GetPresetLabel()
+	{
+		if (!IsActive())
+			return "OFF";
+
+		return typename.EnumToString(NML_EVisualsPreset, m_ePreset);
+	}
+
+	bool IsOverlaysOn() { return m_bVignette; }
+	bool IsFringeOn() { return m_bLens; }
+
+	//------------------------------------------------------------------------------------------------
+	//! OFF -> LOW -> AUTHENTIC -> HEAVY -> EXTREME -> OFF
+	void CyclePreset()
+	{
+		if (!IsActive())
+		{
+			m_bEnabled = true;
+			m_ePreset = NML_EVisualsPreset.LOW;
+		}
+		else if (m_ePreset >= NML_EVisualsPreset.EXTREME)
+		{
+			m_bEnabled = false;
+		}
+		else
+		{
+			int next = m_ePreset + 1;
+			m_ePreset = next;
+		}
+
+		if (IsActive())
+			m_eLastActivePreset = m_ePreset;
+
+		ApplyUserChange();
+	}
+
+	void ToggleOverlays() { m_bVignette = !m_bVignette; ApplyUserChange(); }
+	void ToggleFringe() { m_bLens = !m_bLens; ApplyUserChange(); }
+
+	//------------------------------------------------------------------------------------------------
+	protected void ApplyUserChange()
+	{
+		m_bDirty = true;
+		SaveSettings(); // also refreshes the diag menu through the settings-changed invoker
+		PrintFormat("[NML] Visuals: player set %1 (overlays %2, fringe %3)", GetPresetLabel(), m_bVignette, m_bLens);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -371,7 +441,7 @@ class NML_VisualsManager
 			return;
 		}
 
-		ResourceName lut = LUT_DAY;
+		ResourceName lut = preset.m_sDayLut;
 		if (m_bLowLightLut)
 			lut = LUT_LOWLIGHT;
 
@@ -389,20 +459,11 @@ class NML_VisualsManager
 		{
 			if (UseLayer("fringe"))
 				m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_FRINGE, PostProcessEffectType.ChromAber, FRINGE);
-
-			if (preset.m_fSoft > 0 && UseLayer("soft"))
-				m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_SOFT, PostProcessEffectType.GaussFilter, SOFT);
-
-			if (preset.m_fMotion > 0 && UseLayer("motion"))
-				m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_MOTION, PostProcessEffectType.RotBlur, MOTION);
 		}
-
-		if (m_bGrain && UseLayer("grain"))
-			m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_GRAIN, PostProcessEffectType.FilmGrain, GRAIN);
 
 		m_pSlotsWorld = m_pWorld;
 		m_iSlotsCamera = m_iCamera;
-		PrintFormat("[NML] Visuals: applied %1 on camera %2 (lut %3, grain %4, overlays %5, lens %6)", typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_iCamera, lut, m_bGrain, m_bVignette, m_bLens);
+		PrintFormat("[NML] Visuals: applied %1 on camera %2 (lut %3, overlays %4, lens %5)", typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_iCamera, lut, m_bVignette, m_bLens);
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -426,9 +487,6 @@ class NML_VisualsManager
 		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_LUT, PostProcessEffectType.ColorGrading, string.Empty);
 		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_TRIM, PostProcessEffectType.Colors, string.Empty);
 		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_FRINGE, PostProcessEffectType.ChromAber, string.Empty);
-		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_SOFT, PostProcessEffectType.GaussFilter, string.Empty);
-		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_MOTION, PostProcessEffectType.RotBlur, string.Empty);
-		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_GRAIN, PostProcessEffectType.FilmGrain, string.Empty);
 		m_pSlotsWorld = null;
 		m_iSlotsCamera = -1;
 	}
@@ -437,26 +495,20 @@ class NML_VisualsManager
 	protected void ResetParamCache()
 	{
 		m_fSetSaturation = -1;
-		m_fSetGrain = -1;
 		m_fSetFringe = -1;
-		m_fSetSoft = -1;
-		m_fSetMotion = -1;
 	}
 
 	//------------------------------------------------------------------------------------------------
 	//! Preset x weather x time -> material parameters. Fairness: brightness is never raised; the dark
-	//! uses the LowLight LUT (no black lift) and only more noise.
+	//! uses the LowLight LUT, which only darkens.
 	protected void UpdateParams(NML_VisualsPreset preset)
 	{
+		// Stronger presets react more to weather and time (m_fWeather), never by adding brightness.
+		float w = preset.m_fWeather;
 		float saturation = preset.m_fTrimSaturation;
-		saturation *= Math.Lerp(1, 0.85, m_fOvercast);
-		saturation *= Math.Lerp(1, 0.80, m_fRain);
-		saturation *= Math.Lerp(1, 0.85, m_fDusk);		// mute warm dusk light, no orange cinema look
-
-		float grain = preset.m_fGrain * (1 + 1.2 * m_fNight + 0.4 * m_fDusk);
-		float soft = preset.m_fSoft;
-		if (soft > 0)
-			soft += 0.1 * m_fRain;
+		saturation *= 1 - Math.Clamp(0.15 * w * m_fOvercast, 0, 0.5);
+		saturation *= 1 - Math.Clamp(0.20 * w * m_fRain, 0, 0.5);
+		saturation *= 1 - Math.Clamp(0.15 * w * m_fDusk, 0, 0.5);		// mute warm dusk light, no orange cinema look
 
 		Material trim = Material.GetOrLoadMaterial(TRIM_OVER_VANILLA, 0);
 		if (m_bColormodLoaded)
@@ -467,10 +519,6 @@ class NML_VisualsManager
 			m_fSetSaturation = PushParam(trim, "Saturation", saturation, m_fSetSaturation);
 		}
 
-		Material grainMaterial = Material.GetOrLoadMaterial(GRAIN, 0);
-		if (grainMaterial)
-			m_fSetGrain = PushParam(grainMaterial, "Intensity", grain, m_fSetGrain);
-
 		Material fringe = Material.GetOrLoadMaterial(FRINGE, 0);
 		if (fringe && Math.AbsFloat(preset.m_fFringe - m_fSetFringe) > 0.00005)
 		{
@@ -479,25 +527,29 @@ class NML_VisualsManager
 			m_fSetFringe = preset.m_fFringe;
 		}
 
-		Material softMaterial = Material.GetOrLoadMaterial(SOFT, 0);
-		if (softMaterial)
-			m_fSetSoft = PushParam(softMaterial, "Intensity", soft, m_fSetSoft);
-
-		Material motion = Material.GetOrLoadMaterial(MOTION, 0);
-		if (motion)
-			m_fSetMotion = PushParam(motion, "Power", preset.m_fMotion, m_fSetMotion);
-
 		if (m_wVignette)
 			m_wVignette.SetOpacity(preset.m_fVignette);
 
 		if (m_wGrime)
 		{
-			float grime = preset.m_fGrime * (1 + 0.5 * m_fRain);
+			// Grime is lighter than a night scene, so it fades out in the dark (night fairness).
+			float grime = preset.m_fGrime * (1 + 0.5 * w * m_fRain) * (1 - m_fNight);
 #ifdef ENABLE_DIAG
 			if (m_bGrimeReview)
 				grime = Math.Max(grime, 0.6);
 #endif
 			m_wGrime.SetOpacity(Math.Clamp(grime, 0, 1));
+		}
+
+		if (m_wGrimeHeavy)
+		{
+			// Same night fade and rain response as the base grime.
+			float grimeHeavy = preset.m_fGrimeHeavy * (1 + 0.5 * w * m_fRain) * (1 - m_fNight);
+#ifdef ENABLE_DIAG
+			if (m_bGrimeReview)
+				grimeHeavy = Math.Max(grimeHeavy, 0.6);
+#endif
+			m_wGrimeHeavy.SetOpacity(Math.Clamp(grimeHeavy, 0, 1));
 		}
 	}
 
@@ -562,6 +614,10 @@ class NML_VisualsManager
 			m_wGrime = ImageWidget.Cast(m_wOverlay.FindAnyWidget("Grime"));
 			if (m_wGrime)
 				m_wGrime.SetOpacity(0);
+
+			m_wGrimeHeavy = ImageWidget.Cast(m_wOverlay.FindAnyWidget("GrimeHeavy"));
+			if (m_wGrimeHeavy)
+				m_wGrimeHeavy.SetOpacity(0);
 		}
 
 		if (!m_wOverlay.IsVisible())
@@ -578,6 +634,7 @@ class NML_VisualsManager
 		m_wOverlayParent = null;
 		m_wVignette = null;
 		m_wGrime = null;
+		m_wGrimeHeavy = null;
 	}
 
 #ifdef ENABLE_DIAG
@@ -588,9 +645,8 @@ class NML_VisualsManager
 		DiagMenu.RegisterMenu(DIAG_MENU, DIAG_MENU_NAME, "");
 		DiagMenu.RegisterBool(DIAG_ENABLED, "", "Enabled", DIAG_MENU_NAME);
 		DiagMenu.RegisterItem(DIAG_PRESET, "", "Preset", DIAG_MENU_NAME, "OFF,LOW,AUTHENTIC,HEAVY,EXTREME");
-		DiagMenu.RegisterBool(DIAG_GRAIN, "", "Grain", DIAG_MENU_NAME);
 		DiagMenu.RegisterBool(DIAG_VIGNETTE, "", "Vignette + grime", DIAG_MENU_NAME);
-		DiagMenu.RegisterBool(DIAG_LENS, "", "Fringe + softness + motion", DIAG_MENU_NAME);
+		DiagMenu.RegisterBool(DIAG_LENS, "", "Chromatic fringe", DIAG_MENU_NAME);
 		PushDiag();
 	}
 
@@ -599,9 +655,20 @@ class NML_VisualsManager
 	{
 		DiagMenu.SetValue(DIAG_ENABLED, m_bEnabled);
 		DiagMenu.SetValue(DIAG_PRESET, m_ePreset);
-		DiagMenu.SetValue(DIAG_GRAIN, m_bGrain);
 		DiagMenu.SetValue(DIAG_VIGNETTE, m_bVignette);
 		DiagMenu.SetValue(DIAG_LENS, m_bLens);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	protected void ApplyDiagPreset()
+	{
+		if (m_iDiagPreset <= NML_EVisualsPreset.OFF)
+			return;
+
+		m_ePreset = m_iDiagPreset;
+		m_eLastActivePreset = m_ePreset;
+		m_bDirty = true;
+		PushDiag(); // PollDiag would otherwise read the menu and revert the forced preset
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -685,11 +752,10 @@ class NML_VisualsManager
 	{
 		bool enabled = DiagMenu.GetBool(DIAG_ENABLED);
 		int preset = DiagMenu.GetValue(DIAG_PRESET);
-		bool grain = DiagMenu.GetBool(DIAG_GRAIN);
 		bool vignette = DiagMenu.GetBool(DIAG_VIGNETTE);
 		bool lens = DiagMenu.GetBool(DIAG_LENS);
 
-		if (enabled == m_bEnabled && preset == m_ePreset && grain == m_bGrain && vignette == m_bVignette && lens == m_bLens)
+		if (enabled == m_bEnabled && preset == m_ePreset && vignette == m_bVignette && lens == m_bLens)
 			return;
 
 		if (preset < NML_EVisualsPreset.OFF || preset > NML_EVisualsPreset.EXTREME)
@@ -700,12 +766,11 @@ class NML_VisualsManager
 		if (m_ePreset != NML_EVisualsPreset.OFF)
 			m_eLastActivePreset = m_ePreset;
 
-		m_bGrain = grain;
 		m_bVignette = vignette;
 		m_bLens = lens;
 		m_bDirty = true;
 		SaveSettings();
-		PrintFormat("[NML] Visuals: settings changed (enabled %1, preset %2, grain %3, overlays %4, lens %5)", m_bEnabled, typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_bGrain, m_bVignette, m_bLens);
+		PrintFormat("[NML] Visuals: settings changed (enabled %1, preset %2, overlays %3, lens %4)", m_bEnabled, typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_bVignette, m_bLens);
 	}
 #endif
 }
