@@ -8,7 +8,7 @@
 # -IncludeVisuals also loads the optional client-only NML_Visuals addon (ADR 0007). -World <path> starts that
 # world locally (single player, no server) instead of joining -Server.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>] [-IncludeTests] [-IncludeVisuals] [-World <path>] [-ExtraArgs <args>] [-ExtraAddons <guids>]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 [-Instance <n>] [-Server <ip[:port]>] [-GamePath <dir>] [-IncludeTests] [-IncludeVisuals] [-World <path>] [-ExtraArgs <args>] [-ExtraAddons <guids>] [-ExtraAddonsDir <dir> -ExtraAddonsDirIds <guids>]
 
 param(
 	[string]$GamePath = $(if ($env:ENFUSION_GAME_PATH) { $env:ENFUSION_GAME_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger" }),
@@ -24,7 +24,10 @@ param(
 	# Split on spaces, so values must not contain spaces.
 	[string]$ExtraArgs = "",
 	# Comma-separated Workshop mod GUIDs already synced into .local\workshop (tools\workshop-sync.ps1) to load as well.
-	[string]$ExtraAddons = ""
+	[string]$ExtraAddons = "",
+	# Extra local addons folder (e.g. a gitignored test addon under .local) and the GUIDs to load from it.
+	[string]$ExtraAddonsDir = "",
+	[string]$ExtraAddonsDirIds = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,6 +44,8 @@ $nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
 if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
 if ($IncludeVisuals) { $nmlAddons += ",81E04280BF506AF2" }
 if ($ExtraAddons) { $nmlAddons = "$ExtraAddons,$nmlAddons"; $addons = "$addons," + (Join-Path $repo ".local\workshop\addons") }
+if ($ExtraAddonsDir) { $addons = "$addons," + [System.IO.Path]::GetFullPath((Join-Path $repo $ExtraAddonsDir)) }
+if ($ExtraAddonsDirIds) { $nmlAddons = "$nmlAddons,$ExtraAddonsDirIds" }
 if ($World) { $target = @("-world", "`"$World`""); $label = "world $World" } else { $target = @("-client", $Server); $label = $Server }
 $argList = $target + @("-addonsDir", "`"$addons`"", "-addons", $nmlAddons, "-profile", "`"$profileDir`"",
 	"-window", "-screenWidth", 1280, "-screenHeight", 720, "-noFocus", "-noSplash") + @($ExtraArgs -split " " | Where-Object { $_ })

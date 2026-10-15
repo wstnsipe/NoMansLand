@@ -1,6 +1,9 @@
-//! NML_Visuals look presets (ADR 0007). HEAVY and EXTREME are added in the full-preset stage.
+//! NML_Visuals look presets (ADR 0007). HEAVY and EXTREME are stubs until AUTHENTIC is approved.
 enum NML_EVisualsPreset
 {
 	OFF,
-	AUTHENTIC
+	LOW,
+	AUTHENTIC,
+	HEAVY,
+	EXTREME
 }

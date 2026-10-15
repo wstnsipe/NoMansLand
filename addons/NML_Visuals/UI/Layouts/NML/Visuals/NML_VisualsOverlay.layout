@@ -23,5 +23,20 @@ FrameWidgetClass "{5A245938BF83771F}" {
    Size 512 512
    "Blend Mode" Blend
   }
+  ImageWidgetClass "{3B7E0C2D91A84F56}" {
+   Name "Grime"
+   Slot FrameWidgetSlot "{8C1D4E6F02B3A795}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 1 1 1 1
+   Texture "{5FEC19CAE10FDAE3}UI/Textures/NML/Visuals/NML_Visuals_Grime_UI.edds"
+   Image ""
+   Size 1024 576
+   "Blend Mode" Blend
+  }
  }
 }

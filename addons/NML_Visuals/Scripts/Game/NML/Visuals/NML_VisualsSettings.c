@@ -5,12 +5,15 @@ class NML_VisualsSettings : ModuleGameSettings
 	[Attribute("1", desc: "Master switch for all NML_Visuals effects")]
 	bool m_bEnabled;
 
-	[Attribute("1", desc: "Look preset", enums: ParamEnumArray.FromEnum(NML_EVisualsPreset))]
+	[Attribute("2", desc: "Look preset", enums: ParamEnumArray.FromEnum(NML_EVisualsPreset))]
 	int m_iPreset;
 
 	[Attribute("1", desc: "Film grain")]
 	bool m_bGrain;
 
-	[Attribute("1", desc: "Vignette overlay")]
+	[Attribute("1", desc: "Vignette and grime overlays")]
 	bool m_bVignette;
+
+	[Attribute("1", desc: "Chromatic fringing, softness and turn motion blur")]
+	bool m_bLens;
 }

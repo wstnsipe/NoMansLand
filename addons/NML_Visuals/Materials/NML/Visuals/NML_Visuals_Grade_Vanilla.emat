@@ -1,4 +1,3 @@
 ColorsEffect {
- Saturation 0.8
- ColorizationColor 0.92 0.97 1 0
+ Saturation 1
 }
