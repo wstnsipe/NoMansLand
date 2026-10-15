@@ -4,8 +4,8 @@ NML_Visuals is an optional client-side look (helmet-cam style). It depends on th
 
 ## 1. Add it to the NML server
 
-1. Find the Workshop item **NML Visuals** (ID is in the release report). Version **1.0.0**.
-2. Add it to the server's mod list (`game.mods`: `{ "modId": "<Workshop ID>", "name": "NML Visuals", "version": "1.0.0" }`). Order does not matter. It has no dependencies.
+1. Workshop item **NML_Visuals**, ID **81E04280BF506AF2**, version **1.0.0**, unlisted (reachable by ID and link, not in search): https://reforger.armaplatform.com/workshop/81E04280BF506AF2-NML_Visuals
+2. Add it to the server's mod list (`game.mods`: `{ "modId": "81E04280BF506AF2", "name": "NML_Visuals", "version": "1.0.0" }`). Order does not matter. It has no dependencies.
 3. Start the server. The log must show no `NML` script errors. The server loads the mod and does nothing with it (the manager disables itself on dedicated servers).
 
 ## 2. Check that clients get it

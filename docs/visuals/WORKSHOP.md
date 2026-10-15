@@ -25,6 +25,12 @@ Known limitations: no fisheye distortion, no codec compression, no motion blur, 
 
 Version 1.0.0.
 
+## Published
+
+- Name: NML_Visuals. ID: `81E04280BF506AF2`. Version: 1.0.0 (game 1.8.0.13). Published 2026-10-15.
+- URL: https://reforger.armaplatform.com/workshop/81E04280BF506AF2-NML_Visuals
+- Visibility: unlisted (manifest `unlisted: true, private: false`); licence APL; tag EFFECTS; no dependencies.
+
 ## Publish steps (lead only; needs the Bohemia account)
 
 File > Publish Project (Workbench) publishes the project that is open. Open NML_Visuals itself, never the NML_Dev wrapper.
