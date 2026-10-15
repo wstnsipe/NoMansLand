@@ -8,6 +8,7 @@ Each subfolder is one Enfusion addon with its own `.gproj`, GUID and (if publish
 | `NML_Content` | Prefabs, models, textures, sounds, catalogs | NML_Core | Yes |
 | `NML_Scenario_Dev` | Mission header + sub-scene on a base-game terrain for DEV/TEST | Core, Content | No |
 | `NML_Tests` | Autotest suites and test worlds | Core, Content, Scenario_Dev (tests load the DEV world/mission) | Never |
+| `NML_Visuals` | Optional client-only combat-footage look: post-process grade + grain, vignette overlay, player settings ([ADR 0007](../docs/adr/0007-nml-visuals.md)). No gameplay. | base game only | Later (lead approval) |
 | `NML_Compat_<Mod>` | Integration with one approved third-party mod | Core + that mod | If needed |
 | `NML_Scenario_Myrove` (later) | Scenario on the Myrove terrain | Core, Content, Myrove (external Workshop dependency) | Yes |
 

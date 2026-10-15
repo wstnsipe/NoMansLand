@@ -138,6 +138,31 @@ Stack in a later slot (our Colors at 10 grades Colormod's output) and tune the N
   - Warfare-Colormod is never modified;
   - all tuning happens on our copies.
 
+## Implementation status — prototype (2026-10-14)
+
+Built: OFF/AUTHENTIC, grade (Colors, slot 10), grain (FilmGrain, slot 17), vignette overlay, settings module, diag-menu controls. Verified on a local diag client (DEV Everon world, game 1.8.0.13) with and without Warfare-Colormod, using `-nmlVisualsCycle` and window captures (`docs/workflows.md#nml_visuals-adr-0007`).
+
+| Check | Result |
+|---|---|
+| Scripts compile, manager starts once per client | `[NML] Visuals: started (Colormod 0/1, enabled 1, preset AUTHENTIC)`; no NML script or material errors |
+| Grade | same frame on vs off: saturation 0.171 → 0.133 (×0.78), red–blue balance 26.4 → 19.0 (cooler) |
+| Grain | flat-sky pixel noise 0.03 → 0.74 (subtle, as intended for AUTHENTIC) |
+| Vignette | corner luma 112.5 → 83.3, centre unchanged |
+| OFF restores baseline | slots cleared, overlay hidden; `cleared on camera 0` |
+| `mod_validate`, `tools/validate.mjs` | pass (one warning: enum-only file has no class) |
+
+Findings that change the decision details:
+
+1. **Warfare-Colormod is inert on game 1.8.0.13.** Its `ScreenEffects_ColorPP.emat` fails to parse (`MATERIAL (E): Unknown keyword/data 'Offset'`), and the engine stops at the first unknown key, so none of its values (saturation 0.515, warm colorization) apply. "Stack and compensate" therefore compensates for nothing today: both NML grade materials hold the same values, and `NML_Visuals_Grade_Colormod.emat` is retuned only if Colormod is fixed.
+2. **`Offset` is not a `ColorsEffect` parameter**, so the prototype has **no shadow lift** (also the safe choice for the night rule). Confirmed parameters: `Saturation`, `ColorizationColor`.
+3. **Entry point:** `ArmaReforgerScripted.OnUpdate` did not fire in a test; the manager starts from `OnWorldPostProcess` and polls every 100 ms on the game call queue.
+4. **Overlay z-order:** a negative z-order puts the overlay under the game view (invisible); the default z-order draws it over the HUD, so it is hidden while any menu is open.
+5. Grain inherits vanilla `FilmGrainColdWar.emat` unchanged (its parameter names are still unread); tuning happens on our copy in the full-preset stage.
+
+Code review (8 findings) fixed before the PR: diag-menu sync compiled only in diag builds (release builds would otherwise save everything OFF), settings changed elsewhere now update the diag menu instead of being overwritten, slots tracked per camera, overlay rebuilt per world, re-apply on a new controlled entity (respawn), no apply while the camera id is -1.
+
+Not verified in this stage: persistence across restart (needs manual input in the diag menu), pause-menu/map hiding, ADS/scope PiP, Game Master camera, night, bleeding.
+
 ## Consequences
 
 - Zero coupling to NML gameplay and server; can be published and used independently.

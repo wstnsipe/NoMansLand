@@ -24,6 +24,10 @@ See [addons/README.md](../addons/README.md) and [ADR 0001](adr/0001-addon-split.
 
 A capability gets an NML_Core service facade + config-selected provider only when a decision is actually pending there (a second competing candidate appears). Current boundary: **Medical** — see [ADR 0004](adr/0004-medical-boundary.md). Integration with third-party mods lives in `NML_Compat_<Mod>` addons so mods can be adopted, swapped or dropped without restructuring Core.
 
+## NML_Visuals (prototype, optional, client only)
+
+A standalone addon that depends on the base game only and never touches gameplay or the server ([ADR 0007](adr/0007-nml-visuals.md)). It sets its own materials in camera post-process slots 10 (Colors grade) and 17 (FilmGrain), after vanilla's 5–8, and shows a vignette overlay. Settings are a `ModuleGameSettings` module in the player's profile. Entry point: the one override `ArmaReforgerScripted.OnWorldPostProcess` in `NML_Visuals/Scripts/Game/NML/Modded/`.
+
 ## Arsenal curation (implemented, vanilla only)
 
 Implemented in Stage 5.3 and validated in Stage 5.4, as decided in [ADR 0005](adr/0005-arsenal-curation.md). The server decides what is obtainable from an arsenal; the client list is a courtesy filter.

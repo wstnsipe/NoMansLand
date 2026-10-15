@@ -1,0 +1,27 @@
+FrameWidgetClass "{5A245938BF83771F}" {
+ Name "NML_VisualsOverlayRoot"
+ Slot FrameWidgetSlot "{1077EA9FFDE8ABA9}" {
+  Anchor 0 0 1 1
+  OffsetLeft 0
+  OffsetTop 0
+  OffsetRight 0
+  OffsetBottom 0
+ }
+ {
+  ImageWidgetClass "{FF1479E0BEA5E829}" {
+   Name "Vignette"
+   Slot FrameWidgetSlot "{F89E1CF697E9FB6D}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 0 0 0 1
+   Texture "{6FE2C64CB67BA627}UI/Textures/Editor/Overlays/Vignette/Overlay_Vignette.edds"
+   Image ""
+   Size 512 512
+   "Blend Mode" Blend
+  }
+ }
+}

@@ -13,7 +13,7 @@ Rules:
 No Man's Land (NML): hardcore multiplayer Arma Reforger server/mod. Overview: `docs/architecture.md`; decisions: `docs/adr/`; daily loop: `docs/workflows.md`.
 
 ### Addons (`addons/`)
-- `NML_Core` (scripts, configs, UI, game mode — no terrain references), `NML_Content` (prefabs, assets), `NML_Scenario_Dev` (dev scenario on a base-game terrain), `NML_Tests` (never published), `NML_Compat_<Mod>` (third-party integration), later `NML_Scenario_Myrove`.
+- `NML_Core` (scripts, configs, UI, game mode — no terrain references), `NML_Content` (prefabs, assets), `NML_Scenario_Dev` (dev scenario on a base-game terrain), `NML_Tests` (never published), `NML_Visuals` (optional client-only look, base game only — ADR 0007), `NML_Compat_<Mod>` (third-party integration), later `NML_Scenario_Myrove`.
 - Local dev wrapper `.local/NML_Dev/` is gitignored. Start Workbench with `tools/wb-dev.ps1` (passes `-addonsDir`); the Enfusion MCP attaches after.
 
 ### Conventions

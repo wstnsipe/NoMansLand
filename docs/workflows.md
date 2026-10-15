@@ -95,6 +95,7 @@ GameProject {
   "8C44BDA9D3046928"
   "2F33881926E82E22"
   "99E85DF2DA22A8D2"
+  "81E04280BF506AF2"
  }
  Configurations {
   GameProjectConfig PC {
@@ -105,7 +106,20 @@ GameProject {
 }
 ```
 
-Dependencies, in order: base game, `NML_Core`, `NML_Content`, `NML_Scenario_Dev`, `NML_Tests`. Add new NML addons here when they are created.
+Dependencies, in order: base game, `NML_Core`, `NML_Content`, `NML_Scenario_Dev`, `NML_Tests`, `NML_Visuals`. Add new NML addons here when they are created.
+
+## NML_Visuals (ADR 0007)
+
+Optional, client-only. Servers never load it. Local single-player check on the DEV world (close Workbench first):
+
+```
+powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 -Instance 3 -IncludeVisuals -World "Worlds/NML/Dev/NML_Dev_Everon.ent"
+```
+
+- `-ExtraAddons 65A2EA40DC9E632A` also loads Warfare-Colormod from `.local\workshop` (sync it first with `tools\workshop-sync.ps1`).
+- `-ExtraArgs "-nmlVisualsCycle 4"` (diag builds only) flips the look on and off every 4 s without saving, so both states can be compared on the same frame. The log shows `[NML] Visuals: applied …` and `cleared …`.
+- Prototype controls: diag menu **NML Visuals** (Enabled, Preset, Grain, Vignette). Changes are saved to the player profile.
+- Expected log at start: `[NML] Visuals: started (Colormod <0|1>, enabled 1, preset AUTHENTIC)`. A `MATERIAL (E): Unknown keyword/data 'Offset'` line for `ScreenEffects_ColorPP.emat` comes from Warfare-Colormod's own file, not NML.
 
 ## Claude Code usage
 
