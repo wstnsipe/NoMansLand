@@ -1,6 +1,6 @@
 # ADR 0007: NML_Visuals — optional client-side combat-footage look
 
-- **Status:** Proposed (2026-10-14). No implementation until the lead accepts this ADR and approves the prototype stage.
+- **Status:** Accepted (2026-10-14); the lead resolved open items 7 and 8 (see "Decisions resolved by the lead"). Prototype stage approved; full-preset and release stages are **not** approved yet.
 
 ## Context
 
@@ -126,8 +126,17 @@ Stack in a later slot (our Colors at 10 grades Colormod's output) and tune the N
 4. Whether engine effects (HDR, AA, scope PiP, night vision, thermal) occupy slots 9–19; if AA runs after slot 17 it will smear grain. No API lists slots — runtime test.
 5. Day/night signal for the night rule.
 6. Camera used by scope picture-in-picture.
-7. *(Lead)* Settings UI: own dialog (recommended) vs vanilla settings tab.
-8. *(Lead)* Copying vanilla materials into an NML addon as starting points — same practice as other content; recorded, no conclusion drawn.
+7. *(Resolved — see below)* Settings UI.
+8. *(Resolved — see below)* Copies of vanilla materials.
+
+## Decisions resolved by the lead (2026-10-14)
+
+- **Settings UI (item 7):** an own "NML Visuals" settings dialog. No vanilla Settings-menu tab.
+- **Vanilla material copies (item 8):** approved as starting points, on these conditions:
+  - copied materials live only inside NML_Visuals;
+  - vanilla originals are never edited or overridden;
+  - Warfare-Colormod is never modified;
+  - all tuning happens on our copies.
 
 ## Consequences
 
