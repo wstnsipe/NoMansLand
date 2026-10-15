@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Generates the NML_Visuals lens-grime overlay texture (ADR 0007): soft, deterministic smudges that
-// cluster towards the edges and corners, dark brown-grey, alpha only where there is dirt.
+// Generates the NML_Visuals textures (ADR 0007), deterministic:
+//   NML_Visuals_Grime_UI.png     lens grime overlay: soft smudges towards the edges, dark brown-grey, alpha = dirt
+// Workbench must be running when the PNGs are (re)written: it rebuilds the runtime .edds on file change.
 //
-// Usage: node tools/nml-visuals-grime.mjs [out.png]
-//        default out: addons/NML_Visuals/UI/Textures/NML/Visuals/NML_Visuals_Grime_UI.png
+// Usage: node tools/nml-visuals-textures.mjs
 
 import fs from "node:fs";
 import path from "node:path";
@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const W = 1024, H = 576, SEED = 7331;
+const outDir = path.join(repo, "addons", "NML_Visuals", "UI", "Textures", "NML", "Visuals");
 
 function rng(seed) {
 	let s = seed >>> 0;
@@ -29,6 +30,19 @@ function pngChunk(type, data) {
 	const body = Buffer.concat([Buffer.from(type), data]);
 	const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body));
 	return Buffer.concat([len, body, crc]);
+}
+
+function rgbaPng(w, h, pixel) {
+	const stride = w * 4 + 1, raw = Buffer.alloc(stride * h);
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const o = y * stride + 1 + x * 4, p = pixel(x, y);
+			raw[o] = p[0]; raw[o + 1] = p[1]; raw[o + 2] = p[2]; raw[o + 3] = p[3];
+		}
+	}
+	const ihdr = Buffer.alloc(13);
+	ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
+	return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk("IHDR", ihdr), pngChunk("IDAT", zlib.deflateSync(raw)), pngChunk("IEND", Buffer.alloc(0))]);
 }
 
 export function buildGrime() {
@@ -57,23 +71,23 @@ export function buildGrime() {
 			}
 		}
 	}
-	const stride = W * 4 + 1, raw = Buffer.alloc(stride * H);
-	for (let y = 0; y < H; y++) {
-		for (let x = 0; x < W; x++) {
-			const o = y * stride + 1 + x * 4;
-			raw[o] = 58; raw[o + 1] = 53; raw[o + 2] = 44;
-			// Fade dirt towards the centre so the middle of the frame stays clean.
-			const ex = (x - W / 2) / (W / 2), ey = (y - H / 2) / (H / 2);
-			const edge = Math.min(1, Math.max(0, (Math.sqrt(ex * ex + ey * ey) - 0.35) / 0.55));
-			raw[o + 3] = Math.round(Math.min(0.45, alpha[y * W + x] * edge) * 255);
-		}
-	}
-	const ihdr = Buffer.alloc(13);
-	ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 6;
-	return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk("IHDR", ihdr), pngChunk("IDAT", zlib.deflateSync(raw)), pngChunk("IEND", Buffer.alloc(0))]);
+	return rgbaPng(W, H, (x, y) => {
+		// Fade dirt towards the centre so the middle of the frame stays clean.
+		const ex = (x - W / 2) / (W / 2), ey = (y - H / 2) / (H / 2);
+		const edge = Math.min(1, Math.max(0, (Math.sqrt(ex * ex + ey * ey) - 0.35) / 0.55));
+		return [58, 53, 44, Math.round(Math.min(0.45, alpha[y * W + x] * edge) * 255)];
+	});
 }
 
-const out = process.argv[2] || path.join(repo, "addons", "NML_Visuals", "UI", "Textures", "NML", "Visuals", "NML_Visuals_Grime_UI.png");
-fs.mkdirSync(path.dirname(out), { recursive: true });
-fs.writeFileSync(out, buildGrime());
-console.log(`wrote ${path.relative(repo, out)}`);
+fs.mkdirSync(outDir, { recursive: true });
+for (const [name, build] of [["NML_Visuals_Grime_UI.png", buildGrime]]) {
+	const out = path.join(outDir, name), png = build();
+	// Unchanged files are skipped: committed textures are LFS-lockable and read-only until locked.
+	if (fs.existsSync(out) && fs.readFileSync(out).equals(png)) {
+		console.log(`unchanged ${path.relative(repo, out)}`);
+		continue;
+	}
+
+	fs.writeFileSync(out, png);
+	console.log(`wrote ${path.relative(repo, out)}`);
+}

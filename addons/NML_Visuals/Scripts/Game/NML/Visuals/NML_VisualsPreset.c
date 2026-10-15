@@ -4,8 +4,8 @@ class NML_VisualsPreset
 	float m_fTrimSaturation;	// Colors.Saturation on top of the LUT
 	float m_fGrain;				// FilmGrain.Intensity
 	float m_fFringe;			// ChromAber.PowerX/PowerY
-	float m_fSoft;				// GaussFilter.Intensity
-	float m_fMotion;			// RotBlur.Power (0 = off)
+	float m_fSoft;				// GaussFilter.Intensity (uniform; its Mask did not give edge-only softness on 1.8.0.13)
+	float m_fMotion;			// RotBlur.Power (0 = off). Off everywhere: RotBlur blacked out the frame on game 1.8.0.13
 	float m_fVignette;			// overlay opacity
 	float m_fGrime;				// overlay opacity (0 = off)
 
@@ -29,10 +29,10 @@ class NML_VisualsPreset
 		{
 			//                                                      sat   grain fringe  soft  motion vign  grime
 			case NML_EVisualsPreset.LOW:       return new NML_VisualsPreset(1.10, 0.10, 0.0015, 0.00, 0.000, 0.35, 0.0);
-			case NML_EVisualsPreset.AUTHENTIC: return new NML_VisualsPreset(1.00, 0.22, 0.0030, 0.15, 0.008, 0.55, 0.0);
+			case NML_EVisualsPreset.AUTHENTIC: return new NML_VisualsPreset(1.00, 0.10, 0.0040, 0.00, 0.000, 0.35, 0.0);
 			// Stubs: placeholders until AUTHENTIC is approved (ADR 0007 prototype 2).
-			case NML_EVisualsPreset.HEAVY:     return new NML_VisualsPreset(0.90, 0.35, 0.0050, 0.30, 0.012, 0.70, 0.5);
-			case NML_EVisualsPreset.EXTREME:   return new NML_VisualsPreset(0.80, 0.50, 0.0080, 0.45, 0.016, 0.85, 0.8);
+			case NML_EVisualsPreset.HEAVY:     return new NML_VisualsPreset(0.90, 0.35, 0.0050, 0.30, 0.000, 0.70, 0.5);
+			case NML_EVisualsPreset.EXTREME:   return new NML_VisualsPreset(0.80, 0.50, 0.0080, 0.45, 0.000, 0.85, 0.8);
 		}
 
 		return null;
