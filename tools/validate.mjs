@@ -27,6 +27,8 @@ const LFS_EXT = [".xob", ".fbx", ".edds", ".dds", ".tif", ".tiff", ".tga", ".png
 // .layer: world layer files (<world>_Layers/*.layer) are not registered resources; Workbench
 // refuses to register them and the base game has none in its resource DB (Phase 4).
 const NO_META_EXT = [".c", ".gproj", ".meta", ".rdb", ".md", ".txt", ".layer"];
+// Texture source images: Workbench writes their meta as <name>.edds.meta (named after the runtime file).
+const TEXTURE_SOURCE_EXT = [".png", ".tif", ".tiff", ".tga", ".jpg", ".jpeg", ".dds"];
 
 const errors = [];
 const warnings = [];
@@ -195,7 +197,10 @@ function checkResources()
 		if (ext === ".meta")
 		{
 			const target = f.slice(0, -5);
-			if (!fileSet.has(target.toLowerCase()) && !fs.existsSync(target))
+			// Texture metas are named after the runtime .edds (<name>.edds.meta) and may exist before the
+			// .edds is built, as long as a source image is there.
+			const hasTextureSource = target.toLowerCase().endsWith(".edds") && TEXTURE_SOURCE_EXT.some((e) => fileSet.has((target.slice(0, -5) + e).toLowerCase()));
+			if (!fileSet.has(target.toLowerCase()) && !fs.existsSync(target) && !hasTextureSource)
 				err("meta", `orphan .meta (resource missing): ${r}`);
 			const guid = /\{([0-9A-F]{16})\}/.exec(fs.readFileSync(f, "utf8"))?.[1];
 			if (guid)
@@ -209,7 +214,8 @@ function checkResources()
 		}
 		if (NO_META_EXT.includes(ext) || path.basename(f) === "resourceDatabase.rdb")
 			continue;
-		if (!fileSet.has(`${f}.meta`.toLowerCase()))
+		const textureMeta = TEXTURE_SOURCE_EXT.includes(ext) && fileSet.has(`${f.slice(0, -ext.length)}.edds.meta`.toLowerCase());
+		if (!fileSet.has(`${f}.meta`.toLowerCase()) && !textureMeta)
 			err("meta", `resource has no .meta (register it in Workbench): ${r}`);
 		if (CI && LFS_EXT.includes(ext))
 		{

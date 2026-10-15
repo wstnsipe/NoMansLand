@@ -1,0 +1,14 @@
+GameProject {
+ ID "NML_Visuals"
+ GUID "81E04280BF506AF2"
+ TITLE "NML_Visuals"
+ Dependencies {
+  "58D0FB3206B6F859"
+ }
+ Configurations {
+  GameProjectConfig PC {
+  }
+  GameProjectConfig HEADLESS {
+  }
+ }
+}

@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{6A7CD3BFB176F91B}Materials/NML/Visuals/NML_Visuals_Lut_Day.emat"
+ Configurations {
+  EMATResourceClass PC {
+  }
+  EMATResourceClass XBOX_ONE : PC {
+  }
+  EMATResourceClass XBOX_SERIES : PC {
+  }
+  EMATResourceClass PS4 : PC {
+  }
+  EMATResourceClass PS5 : PC {
+  }
+  EMATResourceClass HEADLESS : PC {
+  }
+ }
+}

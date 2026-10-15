@@ -1,0 +1,3 @@
+ColorGradingEffect {
+ ColorTable "{2046AA0DAF9BD41B}Textures/NML/Visuals/NML_Visuals_LowLight_LUT.edds"
+}

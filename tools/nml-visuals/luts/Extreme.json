@@ -1,0 +1,12 @@
+{
+	"_comment": "Family anchor (lead favourite, 2026-10-15): used by HEAVY and EXTREME. Bright flat mids, hard early clip (blown skies/windows), near-white sky, cool/olive bias. Deep toe: true black, deep shadows a little below OFF (points 0.286/0.401 sit on the engine LUT lattice, which samples linear k/15).",
+	"curve": [[0, 0], [0.286, 0.255], [0.401, 0.52], [0.5, 0.69], [0.68, 0.89], [0.78, 0.97], [1, 1]],
+	"clip": 0.87,
+	"whiteBalance": [0.97, 1.0, 1.03],
+	"saturation": 0.9,
+	"hueBands": [
+		{ "center": 110, "width": 55, "hueShift": -16, "saturation": 0.75 },
+		{ "center": 25, "width": 35, "hueShift": 0, "saturation": 0.85 },
+		{ "center": 215, "width": 40, "hueShift": -20, "saturation": 0.35 }
+	]
+}

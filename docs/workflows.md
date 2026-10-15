@@ -95,6 +95,7 @@ GameProject {
   "8C44BDA9D3046928"
   "2F33881926E82E22"
   "99E85DF2DA22A8D2"
+  "81E04280BF506AF2"
  }
  Configurations {
   GameProjectConfig PC {
@@ -105,7 +106,21 @@ GameProject {
 }
 ```
 
-Dependencies, in order: base game, `NML_Core`, `NML_Content`, `NML_Scenario_Dev`, `NML_Tests`. Add new NML addons here when they are created.
+Dependencies, in order: base game, `NML_Core`, `NML_Content`, `NML_Scenario_Dev`, `NML_Tests`, `NML_Visuals`. Add new NML addons here when they are created.
+
+## NML_Visuals (ADR 0007)
+
+Optional, client-only. Servers never load it. Local single-player check on the DEV world (close Workbench first):
+
+```
+powershell -ExecutionPolicy Bypass -File tools\client-dev.ps1 -Instance 3 -IncludeVisuals -World "Worlds/NML/Dev/NML_Dev_Everon.ent"
+```
+
+- `-ExtraAddons 65A2EA40DC9E632A` also loads Warfare-Colormod from `.local\workshop` (sync it first with `tools\workshop-sync.ps1`).
+- `-ExtraArgs "-nmlVisualsCycle 4"` (diag builds only) flips the look on and off every 4 s without saving, so both states can be compared on the same frame. The log shows `[NML] Visuals: applied …` and `cleared …`.
+- Player controls: **Esc**, then the **NML VISUALS** panel (Look, Vignette and grime, Lens fringing). Changes are saved to the player profile. Diag builds also have the diag menu **NML Visuals**, F7 (off/on), Shift+F7 (next preset), `-nmlVisualsPreset <name>` (session-only preset), `-nmlVisualsOnly lut|trim|fringe|overlay`, `-nmlVisualsPauseAt <s>` (opens the pause menu after s seconds).
+- Look after a texture or LUT change: `node tools/nml-visuals-lut.mjs --all` and `node tools/nml-visuals-textures.mjs` with Workbench running; see [docs/visuals](visuals/README.md).
+- Expected log at start: `[NML] Visuals: started (Colormod <0|1>, enabled 1, preset <name>)`. A `MATERIAL (E): Unknown keyword/data 'Offset'` line for `ScreenEffects_ColorPP.emat` comes from Warfare-Colormod's own file, not NML.
 
 ## Claude Code usage
 

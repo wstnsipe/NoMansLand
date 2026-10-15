@@ -1,0 +1,57 @@
+FrameWidgetClass "{5A245938BF83771F}" {
+ Name "NML_VisualsOverlayRoot"
+ Slot FrameWidgetSlot "{1077EA9FFDE8ABA9}" {
+  Anchor 0 0 1 1
+  OffsetLeft 0
+  OffsetTop 0
+  OffsetRight 0
+  OffsetBottom 0
+ }
+ {
+  ImageWidgetClass "{FF1479E0BEA5E829}" {
+   Name "Vignette"
+   Slot FrameWidgetSlot "{F89E1CF697E9FB6D}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 0 0 0 1
+   Texture "{6FE2C64CB67BA627}UI/Textures/Editor/Overlays/Vignette/Overlay_Vignette.edds"
+   Image ""
+   Size 512 512
+   "Blend Mode" Blend
+  }
+  ImageWidgetClass "{3B7E0C2D91A84F56}" {
+   Name "Grime"
+   Slot FrameWidgetSlot "{8C1D4E6F02B3A795}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 1 1 1 1
+   Texture "{5FEC19CAE10FDAE3}UI/Textures/NML/Visuals/NML_Visuals_Grime_UI.edds"
+   Image ""
+   Size 1024 576
+   "Blend Mode" Blend
+  }
+  ImageWidgetClass "{4C8F1D2E3A5B6C77}" {
+   Name "GrimeHeavy"
+   Slot FrameWidgetSlot "{4C8F1D2E3A5B6C78}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 1 1 1 1
+   Texture "{284356B078EC6BB5}UI/Textures/NML/Visuals/NML_Visuals_GrimeHeavy_UI.edds"
+   Image ""
+   Size 1024 576
+   "Blend Mode" Blend
+  }
+ }
+}

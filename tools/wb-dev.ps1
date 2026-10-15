@@ -9,13 +9,17 @@
 # (port 5775) is already answering. EnfusionMCP handler scripts belong in the
 # wrapper (.local/), never in addons/.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\wb-dev.ps1 [-ToolsPath <dir>] [-GamePath <dir>] [-McpHandlers <dir>] [-NoWait]
+# Publishing an addon: -Project <repo>\addons\<Addon>\<Addon>.gproj opens that addon itself as the project instead of the
+# wrapper, because Workbench > Publish Project publishes the currently open project (never publish the wrapper).
+#
+# Usage: powershell -ExecutionPolicy Bypass -File tools\wb-dev.ps1 [-ToolsPath <dir>] [-GamePath <dir>] [-McpHandlers <dir>] [-Project <addon .gproj>] [-NoWait]
 
 param(
 	[string]$ToolsPath = $(if ($env:ENFUSION_WORKBENCH_PATH) { $env:ENFUSION_WORKBENCH_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger Tools" }),
 	[string]$GamePath = $(if ($env:ENFUSION_GAME_PATH) { $env:ENFUSION_GAME_PATH } else { "C:\Program Files\Steam\steamapps\common\Arma Reforger" }),
 	[string]$McpHandlers = $env:ENFUSION_MCP_HANDLERS,
 	[int]$Port = 5775,
+	[string]$Project = "",
 	[switch]$NoWait
 )
 
@@ -23,6 +27,11 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $wrapper = Join-Path $repo ".local\NML_Dev\NML_Dev.gproj"
 $addons = Join-Path $repo "addons"
+$gproj = $wrapper
+if ($Project) {
+	$gproj = (Resolve-Path $Project).Path
+	if (-not $gproj.StartsWith($addons, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($gproj) -ne ".gproj") { throw "-Project must be an addon .gproj under $addons" }
+}
 
 $exe = @(
 	(Join-Path $ToolsPath "Workbench\ArmaReforgerWorkbenchSteamDiag.exe"),
@@ -30,7 +39,7 @@ $exe = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 if (-not $exe) { throw "ArmaReforgerWorkbenchSteamDiag.exe not found under $ToolsPath (set -ToolsPath or ENFUSION_WORKBENCH_PATH)." }
-if (-not (Test-Path $wrapper)) { throw "Dev wrapper not found: $wrapper. It is created in Phase 2 (see docs/workflows.md)." }
+if (-not $Project -and -not (Test-Path $wrapper)) { throw "Dev wrapper not found: $wrapper. It is created in Phase 2 (see docs/workflows.md)." }
 if (-not (Test-Path $addons)) { throw "Addons folder not found: $addons" }
 if (-not (Test-Path (Join-Path $GamePath "addons"))) { throw "Game install not found at $GamePath (set -GamePath or ENFUSION_GAME_PATH)." }
 
@@ -48,7 +57,9 @@ if (Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "Ar
 # Install the MCP handler scripts into the wrapper (what wb_launch would do), so the
 # wb_* tools work and the MCP never falls back to its kill-and-relaunch recovery,
 # which would restart Workbench without -addonsDir.
-if ($McpHandlers -and (Test-Path $McpHandlers)) {
+if ($Project) {
+	Write-Host "Project mode: MCP handlers not installed (the wb_* tools are for the wrapper)."
+} elseif ($McpHandlers -and (Test-Path $McpHandlers)) {
 	$handlerTarget = Join-Path (Split-Path -Parent $wrapper) "Scripts\WorkbenchGame\EnfusionMCP"
 	New-Item -ItemType Directory -Force -Path $handlerTarget | Out-Null
 	Copy-Item -Path (Join-Path $McpHandlers "*.c") -Destination $handlerTarget -Force
@@ -57,9 +68,9 @@ if ($McpHandlers -and (Test-Path $McpHandlers)) {
 	Write-Warning "enfusion-mcp handler scripts not found (pass -McpHandlers <dir>); wb_* tools will not work."
 }
 
-Write-Host "Starting Workbench:`n  exe:       $exe`n  gproj:     $wrapper`n  addonsDir: $addons"
+Write-Host "Starting Workbench:`n  exe:       $exe`n  gproj:     $gproj`n  addonsDir: $addons"
 # The game folder is the working directory so Workbench resolves the base game (ArmaReforger.gproj).
-$proc = Start-Process -FilePath $exe -ArgumentList "-gproj `"$wrapper`" -addonsDir `"$addons`"" -WorkingDirectory $GamePath -PassThru
+$proc = Start-Process -FilePath $exe -ArgumentList "-gproj `"$gproj`" -addonsDir `"$addons`"" -WorkingDirectory $GamePath -PassThru
 Write-Host "Workbench PID $($proc.Id)"
 
 if ($NoWait) { exit 0 }

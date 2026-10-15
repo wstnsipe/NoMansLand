@@ -1,0 +1,150 @@
+FrameWidgetClass "{6B1D2E3F4A5B6C70}" {
+ Name "NML_VisualsPanelRoot"
+ Slot FrameWidgetSlot "{6B1D2E3F4A5B6C71}" {
+  Anchor 1 1 1 1
+  PositionX -40
+  OffsetLeft -40
+  PositionY -140
+  OffsetTop -140
+  SizeX 340
+  OffsetRight -300
+  SizeY 188
+  OffsetBottom -48
+  Alignment 1 1
+ }
+ {
+  ImageWidgetClass "{6B1D2E3F4A5B6C72}" {
+   Name "Background"
+   Slot FrameWidgetSlot "{6B1D2E3F4A5B6C73}" {
+    Anchor 0 0 1 1
+    OffsetLeft 0
+    OffsetTop 0
+    OffsetRight 0
+    OffsetBottom 0
+   }
+   Color 0 0 0 0.65
+  }
+  TextWidgetClass "{6B1D2E3F4A5B6C74}" {
+   Name "Title"
+   Slot FrameWidgetSlot "{6B1D2E3F4A5B6C75}" {
+    Anchor 0 0 0 0
+    PositionX 16
+    OffsetLeft 16
+    PositionY 8
+    OffsetTop 8
+    SizeX 308
+    OffsetRight -324
+    SizeY 32
+    OffsetBottom -40
+   }
+   Text "NML VISUALS"
+   "Font Size" 22
+   "Min Font Size" 22
+   FontProperties FontProperties "{6B1D2E3F4A5B6C76}" {
+    Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+   }
+  }
+  ButtonWidgetClass "{7C1D2E3F4A5B6C80}" {
+   Name "Preset"
+   Slot FrameWidgetSlot "{7C1D2E3F4A5B6C81}" {
+    Anchor 0 0 0 0
+    PositionX 12
+    OffsetLeft 12
+    PositionY 46
+    OffsetTop 46
+    SizeX 316
+    OffsetRight -328
+    SizeY 38
+    OffsetBottom -84
+   }
+   Color 1 1 1 0.14
+   {
+    TextWidgetClass "{7C1D2E3F4A5B6C82}" {
+     Name "Label"
+     Slot FrameWidgetSlot "{7C1D2E3FA1B2C3D4}" {
+      Anchor 0 0 1 1
+      OffsetLeft 12
+      OffsetTop 0
+      OffsetRight 12
+      OffsetBottom 0
+     }
+     Text "Preset"
+     "Font Size" 20
+     "Min Font Size" 20
+     "Vertical Alignment" Center
+     FontProperties FontProperties "{4A5B6C827C1D2E3F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+   }
+  }
+  ButtonWidgetClass "{7C1D2E3F4A5B6CA0}" {
+   Name "Overlays"
+   Slot FrameWidgetSlot "{7C1D2E3F4A5B6CA1}" {
+    Anchor 0 0 0 0
+    PositionX 12
+    OffsetLeft 12
+    PositionY 90
+    OffsetTop 90
+    SizeX 316
+    OffsetRight -328
+    SizeY 38
+    OffsetBottom -128
+   }
+   Color 1 1 1 0.14
+   {
+    TextWidgetClass "{7C1D2E3F4A5B6CA2}" {
+     Name "Label"
+     Slot FrameWidgetSlot "{7C1D2E3FA1B2C3D5}" {
+      Anchor 0 0 1 1
+      OffsetLeft 12
+      OffsetTop 0
+      OffsetRight 12
+      OffsetBottom 0
+     }
+     Text "Overlays"
+     "Font Size" 20
+     "Min Font Size" 20
+     "Vertical Alignment" Center
+     FontProperties FontProperties "{4A5B6CA27C1D2E3F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+   }
+  }
+  ButtonWidgetClass "{7C1D2E3F4A5B6CB0}" {
+   Name "Fringe"
+   Slot FrameWidgetSlot "{7C1D2E3F4A5B6CB1}" {
+    Anchor 0 0 0 0
+    PositionX 12
+    OffsetLeft 12
+    PositionY 134
+    OffsetTop 134
+    SizeX 316
+    OffsetRight -328
+    SizeY 38
+    OffsetBottom -172
+   }
+   Color 1 1 1 0.14
+   {
+    TextWidgetClass "{7C1D2E3F4A5B6CB2}" {
+     Name "Label"
+     Slot FrameWidgetSlot "{7C1D2E3FA1B2C3D6}" {
+      Anchor 0 0 1 1
+      OffsetLeft 12
+      OffsetTop 0
+      OffsetRight 12
+      OffsetBottom 0
+     }
+     Text "Fringe"
+     "Font Size" 20
+     "Min Font Size" 20
+     "Vertical Alignment" Center
+     FontProperties FontProperties "{4A5B6CB27C1D2E3F}" {
+      Font "{3E7733BAC8C831F6}UI/Fonts/RobotoCondensed/RobotoCondensed_Regular.fnt"
+     }
+    }
+   }
+  }
+ }
+}

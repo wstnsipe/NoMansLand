@@ -1,0 +1,17 @@
+MetaFileClass {
+ Name "{0DAD025814CB44FC}Materials/NML/Visuals/NML_Visuals_Grade_Vanilla.emat"
+ Configurations {
+  EMATResourceClass PC {
+  }
+  EMATResourceClass XBOX_ONE : PC {
+  }
+  EMATResourceClass XBOX_SERIES : PC {
+  }
+  EMATResourceClass PS4 : PC {
+  }
+  EMATResourceClass PS5 : PC {
+  }
+  EMATResourceClass HEADLESS : PC {
+  }
+ }
+}
