@@ -14,7 +14,7 @@
 # The profile (logs, saves) goes to the gitignored <repo>\.local\server\profile.
 # Ports: UDP 2001 (game), 17777 (A2S). The server listens on all interfaces.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests] [-IncludeVisuals]
 
 param(
 	[string]$World = "",
@@ -23,7 +23,10 @@ param(
 	[int]$MaxFps = 60,
 	[switch]$ListScenarios,
 	# Also load NML_Tests (never published). Only for test worlds such as Worlds/NML/Tests/NML_Test_Arsenal.ent.
-	[switch]$IncludeTests
+	[switch]$IncludeTests,
+	# Also load the client-only NML_Visuals addon, so diag clients started with client-dev.ps1 -IncludeVisuals can
+	# join (world mode: client and server addon lists must match). The server runs nothing from it.
+	[switch]$IncludeVisuals
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,6 +36,7 @@ $profileDir = Join-Path $repo ".local\server\profile"
 # NML runtime addons, in load order: NML_Core, NML_Content, NML_Scenario_Dev (NML_Tests only with -IncludeTests, for test worlds).
 $nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
 if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
+if ($IncludeVisuals) { $nmlAddons += ",81E04280BF506AF2" }
 
 if ($World -and $Config) { throw "Use either -World (local addons) or -Config (published builds), not both." }
 

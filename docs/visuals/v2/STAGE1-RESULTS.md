@@ -73,18 +73,36 @@ Cache guard: `node tools/nml-visuals/cache-guard.mjs snapshot|compare`, run befo
 | Smoke finding: **single-player pauses on focus loss** | The pause menu opened when the window lost focus; the game call queue stops, so probe and cycle stop. **Timing sessions need a focused, otherwise idle machine**, or multiplayer (a server + client does not pause). |
 | Smoke finding: interval boundary | The first A interval was flushed after the cycle switched state (state field wrong), and the world-load frames were counted. Both fixed: flush before switching, discard the first 5 s. |
 
+### Run 1 — directional, vanilla (2026-11-09)
+
+- **Setup:** local diag dedicated server (`tools/server-dev.ps1 -World Worlds/NML/Dev/NML_Dev_Everon.ent -IncludeVisuals`) and one diag client (`client-dev.ps1 -IncludeVisuals -ExtraArgs "-nmlvProbe 10 -nmlvCycle 45"`).
+- **Content:** NML addons only, no production stack. 1 player, first person, AUTHENTIC preset, ~155 fps.
+- **Conditions:** the PC was in use during the run, so this is **directional only** (diag binaries, shared GPU).
+- **Log:** archived locally at `.local/research/stage1-runs/2026-11-09_E3diag_vanilla_V5vsV0.console.log`.
+
+| Measure | A = OFF | B = full v1 (LUT, trim, fringe, vignette; grime 0 in AUTHENTIC) |
+|---|---|---|
+| Mean frame time | 6.51 ms | 6.52 ms |
+| Frames | 55,354 | 49,850 |
+| Spikes > 33 ms per 1k frames | 0.00 | 0.06 (one 151 ms hitch, not after an Apply) |
+
+- **B − A:** +0.085 ms (+1.3 %), SE 0.113 ms over 9 ABBA pairs. **Verdict: no difference** (|delta| < 2.31 SE).
+- **Applies:** WORLD 1, CONTROLLED 1, CYCLE 17. After-apply spikes: 0.
+
+**Reading:** with a light scene, a single player and no production mods, v1's full stack (3 PP passes plus overlays) has no measurable frame-time cost and causes no apply hitches. This matches FRIT's "solo is fine". The cost, if real, has to come from the production stack, population or GPU-bound conditions (H1 under load, H3, H6, H8), which runs 2–4 must test.
+
 ## 4. Hypotheses — status
 
 | # | Hypothesis | Status | Evidence |
 |---|---|---|---|
 | H0 | NML not the cause | open | needs E3/E4 |
-| H1 | persistent PP cost | open | needs E1/E2 timing sessions |
+| H1 | persistent PP cost | **not seen in a light scene** (run 1: +0.085 ± 0.113 ms); open under load | needs E2/E4 (production stack, GPU-bound) |
 | H2 | overlay fill rate | open | needs E1/E2 timing sessions |
 | H3 | slot conflicts | **supported (static)**, runtime open | census §1: all three v1 slots shared; GC 13 confirmed for 1.7.2; visual and spike confirmation needs E2/E5 |
 | H4 | clear-then-set spikes | open | needs transition drills |
 | H5 | transitions/settings re-apply | open | logging in place (`SETTINGS_OTHER` etc.) |
 | H6 | stack / MP interaction | open | needs E2→E4 |
-| H7 | extra-world `Start()` | open | `starts` counter in place; smoke run showed 1 start for 1 world |
+| H7 | extra-world `Start()` | **not seen** so far | 1 start per world in the smoke and run 1 (vanilla); recheck with the production stack (render-target/PiP mods) |
 | H8 | slot fight | open | needs E2/E5 |
 | H9 | VRAM pressure | open | needs E2/E4 long sessions |
 
