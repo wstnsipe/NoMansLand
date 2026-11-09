@@ -14,7 +14,7 @@
 # The profile (logs, saves) goes to the gitignored <repo>\.local\server\profile.
 # Ports: UDP 2001 (game), 17777 (A2S). The server listens on all interfaces.
 #
-# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests] [-IncludeVisuals]
+# Usage: powershell -ExecutionPolicy Bypass -File tools\server-dev.ps1 [-World <path>] [-Config <file>] [-ServerPath <dir>] [-ListScenarios] [-IncludeTests] [-IncludeVisuals] [-ExtraAddonsDir <dir> -ExtraAddonsDirIds <guids>] [-SkipNmlRuntime]
 
 param(
 	[string]$World = "",
@@ -26,7 +26,13 @@ param(
 	[switch]$IncludeTests,
 	# Also load the client-only NML_Visuals addon, so diag clients started with client-dev.ps1 -IncludeVisuals can
 	# join (world mode: client and server addon lists must match). The server runs nothing from it.
-	[switch]$IncludeVisuals
+	[switch]$IncludeVisuals,
+	# Extra addons directory (absolute, e.g. the player's Workshop cache, read-only; or relative to the repo) and the
+	# addon GUIDs to load from it, in load order. Downloads then go to the gitignored .local\research\dl.
+	[string]$ExtraAddonsDir = "",
+	[string]$ExtraAddonsDirIds = "",
+	# Do not load this repo's NML runtime addons (NML_Core, NML_Content, NML_Scenario_Dev), e.g. for a production-stack run.
+	[switch]$SkipNmlRuntime
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,9 +40,19 @@ $repo = Split-Path -Parent $PSScriptRoot
 $addons = Join-Path $repo "addons"
 $profileDir = Join-Path $repo ".local\server\profile"
 # NML runtime addons, in load order: NML_Core, NML_Content, NML_Scenario_Dev (NML_Tests only with -IncludeTests, for test worlds).
-$nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
-if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
-if ($IncludeVisuals) { $nmlAddons += ",81E04280BF506AF2" }
+$ids = @()
+if ($ExtraAddonsDirIds) { $ids += $ExtraAddonsDirIds -split "," | Where-Object { $_ } }
+if (-not $SkipNmlRuntime) { $ids += @("C175C744D88BE5AE", "8C44BDA9D3046928", "2F33881926E82E22") }
+if ($IncludeTests) { $ids += "99E85DF2DA22A8D2" }
+if ($IncludeVisuals) { $ids += "81E04280BF506AF2" }
+$nmlAddons = $ids -join ","
+$downloadDir = ""
+if ($ExtraAddonsDir) {
+	$extraDir = $ExtraAddonsDir
+	if (-not [System.IO.Path]::IsPathRooted($extraDir)) { $extraDir = Join-Path $repo $extraDir }
+	$addons = "$addons," + [System.IO.Path]::GetFullPath($extraDir)
+	$downloadDir = Join-Path $repo ".local\research\dl"
+}
 
 if ($World -and $Config) { throw "Use either -World (local addons) or -Config (published builds), not both." }
 
@@ -44,6 +60,7 @@ if ($World) {
 	$exe = Join-Path $ServerPath "ArmaReforgerServerDiag.exe"
 	$argList = @("-server", "`"$World`"", "-addonsDir", "`"$addons`"", "-addons", $nmlAddons,
 		"-bindPort", 2001, "-a2sPort", 17777, "-profile", "`"$profileDir`"", "-maxFPS", $MaxFps)
+	if ($downloadDir) { $argList += @("-addonDownloadDir", "`"$downloadDir`"") }
 	$source = "world $World"
 } else {
 	if (-not $Config) { $Config = Join-Path $repo "server\configs\dev.json" }

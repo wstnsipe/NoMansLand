@@ -27,7 +27,9 @@ param(
 	[string]$ExtraAddons = "",
 	# Extra local addons folder (e.g. a gitignored test addon under .local) and the GUIDs to load from it.
 	[string]$ExtraAddonsDir = "",
-	[string]$ExtraAddonsDirIds = ""
+	[string]$ExtraAddonsDirIds = "",
+	# Do not load this repo's NML runtime addons (NML_Core, NML_Content, NML_Scenario_Dev), e.g. for a production-stack run.
+	[switch]$SkipNmlRuntime
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,15 +42,31 @@ if (-not (Test-Path $exe)) { throw "ArmaReforgerSteamDiag.exe not found in $Game
 New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
 
 # NML runtime addons, in load order (same as tools/server-dev.ps1).
-$nmlAddons = "C175C744D88BE5AE,8C44BDA9D3046928,2F33881926E82E22"
-if ($IncludeTests) { $nmlAddons += ",99E85DF2DA22A8D2" }
-if ($IncludeVisuals) { $nmlAddons += ",81E04280BF506AF2" }
-if ($ExtraAddons) { $nmlAddons = "$ExtraAddons,$nmlAddons"; $addons = "$addons," + (Join-Path $repo ".local\workshop\addons") }
-if ($ExtraAddonsDir) { $addons = "$addons," + [System.IO.Path]::GetFullPath((Join-Path $repo $ExtraAddonsDir)) }
-if ($ExtraAddonsDirIds) { $nmlAddons = "$nmlAddons,$ExtraAddonsDirIds" }
+$ids = @()
+if (-not $SkipNmlRuntime) { $ids += @("C175C744D88BE5AE", "8C44BDA9D3046928", "2F33881926E82E22") }
+if ($IncludeTests) { $ids += "99E85DF2DA22A8D2" }
+if ($IncludeVisuals) { $ids += "81E04280BF506AF2" }
+$nmlAddons = $ids -join ","
+if ($ExtraAddons) { $nmlAddons = (@($ExtraAddons) + $ids) -join ","; $addons = "$addons," + (Join-Path $repo ".local\workshop\addons") }
+$downloadDir = ""
+if ($ExtraAddonsDir) {
+	# Absolute (e.g. the player's Workshop cache, read-only) or relative to the repo. Downloads then go to the
+	# gitignored .local\research\dl, never into that directory.
+	$extraDir = $ExtraAddonsDir
+	if (-not [System.IO.Path]::IsPathRooted($extraDir)) { $extraDir = Join-Path $repo $extraDir }
+	$addons = "$addons," + [System.IO.Path]::GetFullPath($extraDir)
+	$downloadDir = Join-Path $repo ".local\research\dl"
+}
+if ($ExtraAddonsDirIds) {
+	# Production-stack runs (-SkipNmlRuntime): the stack first, NML_Visuals last (same order as server-dev.ps1).
+	# Otherwise unchanged: extra test addons after the NML runtime addons.
+	if ($SkipNmlRuntime) { $nmlAddons = (@($ExtraAddonsDirIds) + @($ids)) -join "," }
+	else { $nmlAddons = "$nmlAddons,$ExtraAddonsDirIds" }
+}
 if ($World) { $target = @("-world", "`"$World`""); $label = "world $World" } else { $target = @("-client", $Server); $label = $Server }
 $argList = $target + @("-addonsDir", "`"$addons`"", "-addons", $nmlAddons, "-profile", "`"$profileDir`"",
 	"-window", "-screenWidth", 1280, "-screenHeight", 720, "-noFocus", "-noSplash") + @($ExtraArgs -split " " | Where-Object { $_ })
+if ($downloadDir) { $argList += @("-addonDownloadDir", "`"$downloadDir`"") }
 
 Write-Host "Starting client $Instance -> $label`n  exe:     $exe`n  profile: $profileDir"
 $proc = Start-Process -FilePath $exe -ArgumentList $argList -WorkingDirectory $GamePath -PassThru
