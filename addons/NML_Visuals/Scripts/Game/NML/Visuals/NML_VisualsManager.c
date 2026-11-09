@@ -17,6 +17,7 @@ class NML_VisualsManager
 	static const int PRIORITY_LUT = 10;
 	static const int PRIORITY_TRIM = 11;
 	static const int PRIORITY_FRINGE = 13;
+	static const int PRIORITY_FRINGE_ALT = 17;	// -nmlvSlots alt (Stage 1): no script/config writer found for 17
 
 	// Camera, world, menu and respawn changes are picked up within POLL_MS; weather/time is sampled every
 	// WEATHER_POLLS polls and blended towards its target by BLEND per sample (about 5 s to settle).
@@ -94,6 +95,25 @@ class NML_VisualsManager
 	// Player controls in the pause menu
 	protected ref NML_VisualsPanel m_Panel;
 
+	// Stage 1 measurement (docs/visuals/v2/STAGE1-PLAN.md). With no -nmlv* parameter all of this keeps v1 behaviour.
+	protected NML_VisualsTestConfig m_Config;
+	protected ref NML_VisualsProbe m_Probe;
+	protected NML_EVisualsApplyReason m_eDirtyReason = NML_EVisualsApplyReason.WORLD;
+	protected int m_iSlotFringe = PRIORITY_FRINGE;
+	protected ResourceName m_sSetLut;		// material currently in each NML slot on m_iSlotsCamera
+	protected ResourceName m_sSetTrim;
+	protected ResourceName m_sSetFringe;
+	protected int m_iApplySets;
+	protected int m_iApplyClears;
+	protected int m_iApplyReasserts;
+	protected int m_iCyclePhase = -1;
+	protected bool m_bCycleOff;
+	protected int m_iCycleLayers = -1;
+	protected bool m_bCycleSaveWarned;
+	protected float m_fOpVignette = -1;		// last pushed overlay opacities (-nmlvHideZero)
+	protected float m_fOpGrime = -1;
+	protected float m_fOpGrimeHeavy = -1;
+
 	//------------------------------------------------------------------------------------------------
 	//! Called when a world has loaded. Creates the manager once and (re)starts its poll.
 	static void Start()
@@ -112,7 +132,10 @@ class NML_VisualsManager
 			s_Instance = new NML_VisualsManager();
 		}
 
-		s_Instance.m_bDirty = true;
+		s_Instance.MarkDirty(NML_EVisualsApplyReason.WORLD);
+		if (s_Instance.m_Probe)
+			s_Instance.m_Probe.OnStart(); // H7: more than one start per world load means extra worlds re-apply
+
 		GetGame().GetCallqueue().Remove(s_Instance.Poll);
 		GetGame().GetCallqueue().CallLater(s_Instance.Poll, POLL_MS, true);
 	}
@@ -120,6 +143,10 @@ class NML_VisualsManager
 	//------------------------------------------------------------------------------------------------
 	void NML_VisualsManager()
 	{
+		m_Config = NML_VisualsTestConfig.Get();
+		if (m_Config.m_bAltSlots)
+			m_iSlotFringe = PRIORITY_FRINGE_ALT;
+
 		array<string> addons = {};
 		GameProject.GetLoadedAddons(addons);
 		m_bColormodLoaded = addons.Contains(COLORMOD_GUID);
@@ -176,6 +203,15 @@ class NML_VisualsManager
 		}
 #endif
 
+		if (m_Config.m_iProbeSeconds > 0)
+			m_Probe = new NML_VisualsProbe(this, m_Config.m_iProbeSeconds);
+
+		if (m_Config.m_iCycleSeconds > 0)
+		{
+			CycleTick(); // phase A now
+			GetGame().GetCallqueue().CallLater(CycleTick, m_Config.m_iCycleSeconds * 1000, true);
+		}
+
 		PrintFormat("[NML] Visuals: started (Colormod %1, enabled %2, preset %3)", m_bColormodLoaded, m_bEnabled, typename.EnumToString(NML_EVisualsPreset, m_ePreset));
 	}
 
@@ -185,6 +221,7 @@ class NML_VisualsManager
 		if (GetGame())
 		{
 			GetGame().GetCallqueue().Remove(Poll);
+			GetGame().GetCallqueue().Remove(CycleTick);
 #ifdef ENABLE_DIAG
 			GetGame().GetCallqueue().Remove(DiagCycle);
 #endif
@@ -210,9 +247,15 @@ class NML_VisualsManager
 		if (!module)
 		{
 			Print("[NML] Visuals: settings module not found; using defaults", LogLevel.WARNING);
-			m_bDirty = true;
+			MarkDirty(NML_EVisualsApplyReason.SETTINGS_OTHER);
 			return;
 		}
+
+		// Stage 1: tell saves that change our values apart from saves by other menus or mods (H5).
+		bool oldEnabled = m_bEnabled;
+		NML_EVisualsPreset oldPreset = m_ePreset;
+		bool oldVignette = m_bVignette;
+		bool oldLens = m_bLens;
 
 		int preset;
 		module.Get("m_bEnabled", m_bEnabled);
@@ -225,10 +268,24 @@ class NML_VisualsManager
 			preset = NML_EVisualsPreset.AUTHENTIC;
 
 		m_ePreset = preset;
+		if (m_Config.m_iForcedPreset > NML_EVisualsPreset.OFF)
+		{
+			// -nmlvPreset: session-only, survives settings reloads
+			m_bEnabled = true;
+			m_ePreset = m_Config.m_iForcedPreset;
+		}
+
 		if (m_ePreset != NML_EVisualsPreset.OFF)
 			m_eLastActivePreset = m_ePreset;
 
-		m_bDirty = true;
+		bool ours = m_bEnabled != oldEnabled || m_ePreset != oldPreset || m_bVignette != oldVignette || m_bLens != oldLens;
+		if (m_Probe)
+			m_Probe.OnSettings(ours);
+
+		if (ours)
+			MarkDirty(NML_EVisualsApplyReason.SETTINGS_OURS);
+		else if (!m_Config.m_bSettingsFilter)
+			MarkDirty(NML_EVisualsApplyReason.SETTINGS_OTHER); // v1 behaviour: any settings save re-applies
 
 #ifdef ENABLE_DIAG
 		ApplyDiagPreset(); // a -nmlVisualsPreset session override survives settings reloads
@@ -239,6 +296,16 @@ class NML_VisualsManager
 	//------------------------------------------------------------------------------------------------
 	protected void SaveSettings()
 	{
+		if (m_Config.m_iCycleSeconds > 0 || m_Config.m_iForcedPreset > NML_EVisualsPreset.OFF)
+		{
+			// -nmlvCycle / -nmlvPreset are session-only test states; never persist them to the player's profile.
+			if (!m_bCycleSaveWarned)
+				Print("[NML] Visuals: settings not saved while -nmlvCycle or -nmlvPreset is active", LogLevel.WARNING);
+
+			m_bCycleSaveWarned = true;
+			return;
+		}
+
 		BaseContainer module = GetGame().GetGameUserSettings().GetModule(SETTINGS_MODULE);
 		if (!module)
 			return;
@@ -269,8 +336,11 @@ class NML_VisualsManager
 			m_iCamera = -1;
 			m_pSlotsWorld = null;
 			m_iSlotsCamera = -1;
+			m_sSetLut = string.Empty;
+			m_sSetTrim = string.Empty;
+			m_sSetFringe = string.Empty;
 			DestroyOverlay();
-			m_bDirty = true;
+			MarkDirty(NML_EVisualsApplyReason.WORLD);
 		}
 
 		if (!world)
@@ -299,11 +369,35 @@ class NML_VisualsManager
 
 		if (m_bDirty || camera != m_iCamera || controlled != m_pControlled || lowLight != m_bLowLightLut)
 		{
+			NML_EVisualsApplyReason reason = m_eDirtyReason;
+			if (!m_bDirty)
+			{
+				if (camera != m_iCamera)
+					reason = NML_EVisualsApplyReason.CAMERA;
+				else if (controlled != m_pControlled)
+					reason = NML_EVisualsApplyReason.CONTROLLED;
+				else
+					reason = NML_EVisualsApplyReason.LOWLIGHT;
+			}
+
+			if (m_Probe)
+			{
+				if (camera != m_iCamera)
+					m_Probe.OnCameraChanged();
+
+				if (controlled != m_pControlled)
+					m_Probe.OnControlledChanged();
+			}
+
+			// changed mode: a respawn may reuse the camera index with a fresh stack, even when another reason
+			// (settings, cycle) is pending in the same poll.
+			bool reassert = controlled != m_pControlled || reason == NML_EVisualsApplyReason.WORLD;
+
 			m_iCamera = camera;
 			m_pControlled = controlled;
 			m_bLowLightLut = lowLight;
 			m_bDirty = false;
-			Apply(preset);
+			Apply(preset, reason, reassert);
 		}
 
 		if (preset)
@@ -313,7 +407,7 @@ class NML_VisualsManager
 	//------------------------------------------------------------------------------------------------
 	protected NML_VisualsPreset GetActivePreset()
 	{
-		if (!m_bEnabled)
+		if (!m_bEnabled || m_bCycleOff)
 			return null;
 
 		return NML_VisualsPreset.Get(m_ePreset);
@@ -363,7 +457,7 @@ class NML_VisualsManager
 	//------------------------------------------------------------------------------------------------
 	protected void ApplyUserChange()
 	{
-		m_bDirty = true;
+		MarkDirty(NML_EVisualsApplyReason.USER);
 		SaveSettings(); // also refreshes the diag menu through the settings-changed invoker
 		PrintFormat("[NML] Visuals: player set %1 (overlays %2, fringe %3)", GetPresetLabel(), m_bVignette, m_bLens);
 	}
@@ -429,41 +523,220 @@ class NML_VisualsManager
 
 	//------------------------------------------------------------------------------------------------
 	//! Sets or clears our slots. Material parameters are pushed separately by UpdateParams.
-	protected void Apply(NML_VisualsPreset preset)
+	//! legacy (v1, default): clear every NML slot, then set the wanted ones.
+	//! changed (-nmlvApply changed): on the same camera only slots whose material changed are written; unchanged
+	//! slots are re-asserted on a controlled-entity or world change (a respawn may reuse the camera index with a
+	//! fresh stack); slots are cleared only when their layer turns off.
+	protected void Apply(NML_VisualsPreset preset, NML_EVisualsApplyReason reason, bool reassert)
 	{
-		// Always clear the camera we last set first (also covers camera switches).
-		ClearSlots();
+		m_iApplySets = 0;
+		m_iApplyClears = 0;
+		m_iApplyReasserts = 0;
+
+		// Wanted material per slot; empty = not wanted.
+		ResourceName lut;
+		ResourceName trim;
+		ResourceName fringe;
+		int layers = GetLayers();
+		if (preset)
+		{
+			if ((layers & NML_VisualsTestConfig.LAYER_LUT) != 0 && UseLayer("lut"))
+			{
+				lut = preset.m_sDayLut;
+				if (m_bLowLightLut)
+					lut = LUT_LOWLIGHT;
+			}
+
+			if ((layers & NML_VisualsTestConfig.LAYER_TRIM) != 0 && UseLayer("trim"))
+			{
+				trim = TRIM_OVER_VANILLA;
+				if (m_bColormodLoaded)
+					trim = TRIM_OVER_COLORMOD;
+			}
+
+			if ((layers & NML_VisualsTestConfig.LAYER_FRINGE) != 0 && UseLayer("fringe"))
+				fringe = FRINGE;
+		}
+
+		bool sameCamera = m_pSlotsWorld && m_pSlotsWorld == m_pWorld && m_iSlotsCamera == m_iCamera;
+		if (!m_Config.m_bApplyChanged || !sameCamera)
+		{
+			// v1: always clear the camera we last set first (also covers camera switches).
+			ClearSlots();
+			if (preset)
+			{
+				m_sSetLut = SetSlot(PRIORITY_LUT, PostProcessEffectType.ColorGrading, lut, m_sSetLut, false);
+				m_sSetTrim = SetSlot(PRIORITY_TRIM, PostProcessEffectType.Colors, trim, m_sSetTrim, false);
+				m_sSetFringe = SetSlot(m_iSlotFringe, PostProcessEffectType.ChromAber, fringe, m_sSetFringe, false);
+			}
+		}
+		else
+		{
+			m_sSetLut = SetSlot(PRIORITY_LUT, PostProcessEffectType.ColorGrading, lut, m_sSetLut, reassert);
+			m_sSetTrim = SetSlot(PRIORITY_TRIM, PostProcessEffectType.Colors, trim, m_sSetTrim, reassert);
+			m_sSetFringe = SetSlot(m_iSlotFringe, PostProcessEffectType.ChromAber, fringe, m_sSetFringe, reassert);
+		}
+
 		ResetParamCache();
 
+		if (m_sSetLut.IsEmpty() && m_sSetTrim.IsEmpty() && m_sSetFringe.IsEmpty())
+		{
+			m_pSlotsWorld = null;
+			m_iSlotsCamera = -1;
+		}
+		else
+		{
+			m_pSlotsWorld = m_pWorld;
+			m_iSlotsCamera = m_iCamera;
+		}
+
+		string mode = "legacy";
+		if (m_Config.m_bApplyChanged)
+			mode = "changed";
+
+		string stage1 = string.Format(" reason=%1 layers=%2 mode=%3 fringeSlot=%4 sets=%5 clears=%6 reasserts=%7",
+			typename.EnumToString(NML_EVisualsApplyReason, reason), NML_VisualsTestConfig.LayersToString(layers), mode, m_iSlotFringe,
+			m_iApplySets, m_iApplyClears, m_iApplyReasserts);
+
 		if (!preset)
+			Print(string.Format("[NML] Visuals: cleared on camera %1", m_iCamera) + stage1);
+		else
+			Print(string.Format("[NML] Visuals: applied %1 on camera %2 (lut %3, overlays %4, lens %5)", typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_iCamera, lut, m_bVignette, m_bLens) + stage1);
+
+		if (m_Probe)
+			m_Probe.OnApply(reason, m_iApplySets, m_iApplyClears, m_iApplyReasserts);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Writes one NML slot on the current camera when the wanted material differs from what is there, or when
+	//! asked to re-assert it. Returns the material now in the slot.
+	protected ResourceName SetSlot(int priority, PostProcessEffectType type, ResourceName wanted, ResourceName current, bool reassert)
+	{
+		if (wanted == current)
 		{
-			PrintFormat("[NML] Visuals: cleared on camera %1", m_iCamera);
-			return;
+			if (!reassert || wanted.IsEmpty())
+				return current;
+
+			m_iApplyReasserts++;
 		}
 
-		ResourceName lut = preset.m_sDayLut;
-		if (m_bLowLightLut)
-			lut = LUT_LOWLIGHT;
+		m_pWorld.SetCameraPostProcessEffect(m_iCamera, priority, type, wanted);
+		if (wanted.IsEmpty())
+			m_iApplyClears++;
+		else
+			m_iApplySets++;
 
-		ResourceName trim = TRIM_OVER_VANILLA;
-		if (m_bColormodLoaded)
-			trim = TRIM_OVER_COLORMOD;
+		return wanted;
+	}
 
-		if (UseLayer("lut"))
-			m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_LUT, PostProcessEffectType.ColorGrading, lut);
+	//------------------------------------------------------------------------------------------------
+	//! A reason is kept until the next Apply; the first one recorded wins (a user change that also saves
+	//! settings is reported as USER, not as a settings reload).
+	protected void MarkDirty(NML_EVisualsApplyReason reason)
+	{
+		if (!m_bDirty)
+			m_eDirtyReason = reason;
 
-		if (UseLayer("trim"))
-			m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_TRIM, PostProcessEffectType.Colors, trim);
+		m_bDirty = true;
+	}
 
+	//------------------------------------------------------------------------------------------------
+	//! Layers in use: -nmlvCycle layer sets, else -nmlvLayers, else the player's settings (v1).
+	protected int GetLayers()
+	{
+		if (m_Config.m_bCycleMasks && m_iCycleLayers >= 0)
+			return m_iCycleLayers;
+
+		if (m_Config.m_bLayersSet)
+			return m_Config.m_iLayers;
+
+		int layers = NML_VisualsTestConfig.LAYER_LUT | NML_VisualsTestConfig.LAYER_TRIM;
 		if (m_bLens)
+			layers |= NML_VisualsTestConfig.LAYER_FRINGE;
+
+		if (m_bVignette)
+			layers |= NML_VisualsTestConfig.LAYERS_OVERLAY;
+
+		return layers;
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! -nmlvCycle: phases in ABBA order (A B B A A B B A ...) so slow drift cancels out.
+	//! OFF/ON form: A = OFF, B = ON. Layer-set form: A and B are the two layer sets.
+	protected void CycleTick()
+	{
+		m_iCyclePhase++;
+		int step = m_iCyclePhase % 4;
+		bool phaseA = step == 0 || step == 3;
+
+		int layers = m_Config.m_iCycleLayersB;
+		if (phaseA)
+			layers = m_Config.m_iCycleLayersA;
+
+		string label;
+		if (m_Config.m_bCycleMasks)
 		{
-			if (UseLayer("fringe"))
-				m_pWorld.SetCameraPostProcessEffect(m_iCamera, PRIORITY_FRINGE, PostProcessEffectType.ChromAber, FRINGE);
+			label = "B:";
+			if (phaseA)
+				label = "A:";
+
+			label += NML_VisualsTestConfig.LayersToString(layers);
+		}
+		else
+		{
+			label = "B:on";
+			if (phaseA)
+				label = "A:off";
 		}
 
-		m_pSlotsWorld = m_pWorld;
-		m_iSlotsCamera = m_iCamera;
-		PrintFormat("[NML] Visuals: applied %1 on camera %2 (lut %3, overlays %4, lens %5)", typename.EnumToString(NML_EVisualsPreset, m_ePreset), m_iCamera, lut, m_bVignette, m_bLens);
+		// Close the running probe interval while the old phase's state is still in place.
+		if (m_Probe)
+			m_Probe.OnPhase(label);
+
+		if (m_Config.m_bCycleMasks)
+			m_iCycleLayers = layers;
+		else
+			m_bCycleOff = phaseA;
+
+		MarkDirty(NML_EVisualsApplyReason.CYCLE);
+
+		PrintFormat("[NML] Visuals: cycle phase %1 %2", m_iCyclePhase, label);
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! Summary-time state for the probe line (never called per frame).
+	string GetProbeState()
+	{
+		string view = "none";
+		ChimeraCharacter character = ChimeraCharacter.Cast(m_pControlled);
+		if (character)
+		{
+			view = "1P";
+			CharacterControllerComponent controller = character.GetCharacterController();
+			if (controller && controller.IsInThirdPersonView())
+				view = "3P";
+
+			if (controller && controller.IsWeaponADS())
+				view += "+ads";
+
+			if (character.IsInVehicle())
+				view += "+veh";
+		}
+		else if (m_pControlled)
+		{
+			view = "other:" + m_pControlled.ClassName();
+		}
+
+		if (SCR_2DPIPSightsComponent.IsPIPActive())
+			view += "+pip";
+
+		string mode = "legacy";
+		if (m_Config.m_bApplyChanged)
+			mode = "changed";
+
+		return string.Format("layers=%1 mode=%2 fringeSlot=%3 filter=%4 hideZero=%5 preset=%6 night=%7 view=%8 players=%9",
+			NML_VisualsTestConfig.LayersToString(GetLayers()), mode, m_iSlotFringe, m_Config.m_bSettingsFilter, m_Config.m_bHideZero,
+			GetPresetLabel(), m_fNight, view, GetGame().GetPlayerManager().GetPlayerCount());
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -486,9 +759,13 @@ class NML_VisualsManager
 
 		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_LUT, PostProcessEffectType.ColorGrading, string.Empty);
 		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_TRIM, PostProcessEffectType.Colors, string.Empty);
-		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, PRIORITY_FRINGE, PostProcessEffectType.ChromAber, string.Empty);
+		m_pSlotsWorld.SetCameraPostProcessEffect(m_iSlotsCamera, m_iSlotFringe, PostProcessEffectType.ChromAber, string.Empty);
+		m_iApplyClears += 3;
 		m_pSlotsWorld = null;
 		m_iSlotsCamera = -1;
+		m_sSetLut = string.Empty;
+		m_sSetTrim = string.Empty;
+		m_sSetFringe = string.Empty;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -527,8 +804,9 @@ class NML_VisualsManager
 			m_fSetFringe = preset.m_fFringe;
 		}
 
+		int layers = GetLayers();
 		if (m_wVignette)
-			m_wVignette.SetOpacity(preset.m_fVignette);
+			m_fOpVignette = PushOpacity(m_wVignette, layers & NML_VisualsTestConfig.LAYER_VIGNETTE, preset.m_fVignette, m_fOpVignette);
 
 		if (m_wGrime)
 		{
@@ -538,7 +816,7 @@ class NML_VisualsManager
 			if (m_bGrimeReview)
 				grime = Math.Max(grime, 0.6);
 #endif
-			m_wGrime.SetOpacity(Math.Clamp(grime, 0, 1));
+			m_fOpGrime = PushOpacity(m_wGrime, layers & NML_VisualsTestConfig.LAYER_GRIME, Math.Clamp(grime, 0, 1), m_fOpGrime);
 		}
 
 		if (m_wGrimeHeavy)
@@ -549,8 +827,31 @@ class NML_VisualsManager
 			if (m_bGrimeReview)
 				grimeHeavy = Math.Max(grimeHeavy, 0.6);
 #endif
-			m_wGrimeHeavy.SetOpacity(Math.Clamp(grimeHeavy, 0, 1));
+			m_fOpGrimeHeavy = PushOpacity(m_wGrimeHeavy, layers & NML_VisualsTestConfig.LAYER_GRIMEHEAVY, Math.Clamp(grimeHeavy, 0, 1), m_fOpGrimeHeavy);
 		}
+	}
+
+	//------------------------------------------------------------------------------------------------
+	//! v1 (default): SetOpacity every poll, widget always visible. A layer turned off by -nmlvLayers/-nmlvCycle
+	//! is hidden. -nmlvHideZero hides a widget below 0.005 opacity and pushes opacity only when it changed.
+	//! Returns the opacity last pushed.
+	protected float PushOpacity(ImageWidget widget, int layerOn, float opacity, float last)
+	{
+		bool visible = layerOn != 0;
+		if (visible && m_Config.m_bHideZero)
+			visible = opacity >= 0.005;
+
+		if (widget.IsVisible() != visible)
+			widget.SetVisible(visible);
+
+		if (!visible)
+			return last;
+
+		if (m_Config.m_bHideZero && Math.AbsFloat(opacity - last) < 0.002)
+			return last;
+
+		widget.SetOpacity(opacity);
+		return opacity;
 	}
 
 	//------------------------------------------------------------------------------------------------
@@ -577,7 +878,7 @@ class NML_VisualsManager
 		if (m_wOverlay && (parent != m_wOverlayParent || onWorkspace != m_bOverlayOnWorkspace))
 			DestroyOverlay(); // HUD replaced (respawn) or moved: rebuild under the new parent
 
-		bool show = preset && m_bVignette && UseLayer("overlay");
+		bool show = preset && (GetLayers() & NML_VisualsTestConfig.LAYERS_OVERLAY) != 0 && UseLayer("overlay");
 		if (show && onWorkspace)
 		{
 			MenuManager menuManager = GetGame().GetMenuManager();
@@ -635,6 +936,9 @@ class NML_VisualsManager
 		m_wVignette = null;
 		m_wGrime = null;
 		m_wGrimeHeavy = null;
+		m_fOpVignette = -1;
+		m_fOpGrime = -1;
+		m_fOpGrimeHeavy = -1;
 	}
 
 #ifdef ENABLE_DIAG
