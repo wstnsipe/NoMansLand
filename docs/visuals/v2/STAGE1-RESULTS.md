@@ -1,7 +1,7 @@
 # NML_Visuals v2 — Stage 1 results (measurement and root-cause validation)
 
 - **Plan:** [STAGE1-PLAN.md](STAGE1-PLAN.md) (approved 2026-11-09). **Stage 0:** [STAGE0-AUDIT.md](STAGE0-AUDIT.md).
-- **Status:** measurement build implemented and smoke-tested. Timing sessions (E1/E2) are pending a focused, otherwise idle PC; E3-release and E4 are pending **gate A**.
+- **Status:** measurement build implemented. Local runs 1–4 done (vanilla, then the full production stack); see §3 and the interim conclusion. Gates A and B were declined (2026-11-09).
 - **All third-party versions:** local Workshop cache versions, **VERSION UNVERIFIED** against production.
 
 ## 1. Static PP slot census (complete)
@@ -91,20 +91,60 @@ Cache guard: `node tools/nml-visuals/cache-guard.mjs snapshot|compare`, run befo
 
 **Reading:** with a light scene, a single player and no production mods, v1's full stack (3 PP passes plus overlays) has no measurable frame-time cost and causes no apply hitches. This matches FRIT's "solo is fine". The cost, if real, has to come from the production stack, population or GPU-bound conditions (H1 under load, H3, H6, H8), which runs 2–4 must test.
 
+### Runs 2–4 — full production stack (184 mods), local (2026-11-09)
+
+**Setup**
+- All 184 Custom #784 mods load read-only from the lead's local Workshop cache (`-ExtraAddonsDir`), with downloads redirected to `.local/research/dl`.
+- **Cache guard: no change after any of the 5 sessions** (snapshots in `.local/research/cache-guard/`).
+- Logs: `.local/research/stage1-runs/`.
+
+**Two local limits found**
+1. **Local multiplayer with the production stack is impossible.** The diag server kicks the diag client: `RplConnection::ValidationError script protocol checksum does not match`. Some production mod compiles differently on a dedicated server than on a client, so runs 2–4 are single player (`client-dev.ps1 -World`).
+2. **The production scenario (`Missions/NML_Ovruch.conf`, world `Worlds/NML_Ovruch.ent`) stops in the role-selection menu** in single player, which needs UI input to leave. Runs 2–4 therefore load the production stack on the NML dev world, which auto-spawns the player in first person. That covers the production mods' scripts, screen effects and camera handlers, but not the Ovruch terrain or combat events.
+
+**Common to every run**
+- Diag binary, single player, PC in use: directional only.
+- First person, `-nmlvProbe 10 -nmlvCycle 45` (ABBA).
+
+| Run | Resolution | Preset | A = OFF mean | B = full v1 mean | B − A | SE (pairs) | Verdict |
+|---|---|---|---|---|---|---|---|
+| 2 | 1280×720 | AUTHENTIC | 9.52 ms | 9.73 ms | **+0.195 ms (+2.1 %)** | 0.089 (7) | no difference (t 2.19 < 2.45), but every pair is positive |
+| 3 | 1920×1080 | AUTHENTIC | 11.04 ms | 11.02 ms | −0.098 ms (−0.9 %) | 0.246 (8) | no difference |
+| 4 | 1920×1080 | EXTREME (both grime layers) | 10.93 ms | 11.11 ms | **+0.163 ms (+1.5 %)** | 0.067 (8) | **differs**, but below the 0.3 ms / 2 % materiality bar |
+
+Notes:
+- **Spikes:** runs 2–4 had 46 cycle switches, each a full clear-and-set of all slots, plus 3 WORLD applies and 6 SETTINGS_OTHER applies. **There were 0 spikes after an Apply in any run**, and background spikes stayed at ≤ 0.4 per 1,000 frames.
+- **Load:** the production stack raises the base frame time from 6.5 ms (vanilla, run 1) to 9.5 ms at 720p.
+- **CPU-bound:** moving from 720p to 1080p (2.25× the pixels) only went from 9.5 to 11.0 ms. This machine is CPU-bound, so per-pixel costs are mostly hidden here.
+
 ## 4. Hypotheses — status
 
 | # | Hypothesis | Status | Evidence |
 |---|---|---|---|
-| H0 | NML not the cause | open | needs E3/E4 |
-| H1 | persistent PP cost | **not seen in a light scene** (run 1: +0.085 ± 0.113 ms); open under load | needs E2/E4 (production stack, GPU-bound) |
-| H2 | overlay fill rate | open | needs E1/E2 timing sessions |
-| H3 | slot conflicts | **supported (static)**, runtime open | census §1: all three v1 slots shared; GC 13 confirmed for 1.7.2; visual and spike confirmation needs E2/E5 |
-| H4 | clear-then-set spikes | open | needs transition drills |
-| H5 | transitions/settings re-apply | open | logging in place (`SETTINGS_OTHER` etc.) |
-| H6 | stack / MP interaction | open | needs E2→E4 |
-| H7 | extra-world `Start()` | **not seen** so far | 1 start per world in the smoke and run 1 (vanilla); recheck with the production stack (render-target/PiP mods) |
+| H0 | NML not the cause | **supported locally** | v1 costs ≤ 0.2 ms (≤ 2 %) with all 184 mods; no hitches. Not provable without populated MP (gate A or FRIT logs) |
+| H1 | persistent PP cost | **measurable, immaterial here** | runs 1–3 show no difference; it doesn't scale 720p→1080p on this CPU-bound PC. Open only for GPU-bound clients (high resolution, weaker GPUs) |
+| H2 | overlay fill rate | **measurable, immaterial here** | run 4 (EXTREME, both grime layers): +0.163 ± 0.067 ms (+1.5 %) |
+| H3 | slot conflicts | **confirmed statically**; runtime not exercised | census §1. Combat events (suppression, thermal, Smokeable) need input or MP, which local runs can't provide |
+| H4 | clear-then-set spikes | **rejected (steady state)** | 46 full clear-and-set cycles plus 3 world applies with the production stack: 0 after-Apply spikes |
+| H5 | transitions/settings re-apply | partly seen | `SETTINGS_OTHER` 2 per session (startup saves by other mods). Respawn, vehicle, drone and NVG drills not run (need input) |
+| H6 | stack / MP interaction | **weak** | the stack raises base load (6.5 → 9.5 ms), but v1's own cost stays ≤ 0.2 ms. MP not testable locally (checksum kick) |
+| H7 | extra-world `Start()` | **rejected** | 1 start per world in all 6 sessions, including the production stack |
 | H8 | slot fight | open | needs E2/E5 |
 | H9 | VRAM pressure | open | needs E2/E4 long sessions |
+
+### Interim conclusion (2026-11-09)
+
+**Under local conditions, NML_Visuals v1 is not a material rendering cost, even with the full production stack:**
+- steady-state cost is ≤ ~0.2 ms (≤ 2 %), and only measurable for EXTREME;
+- re-applying (clear-then-set) causes no hitches;
+- `Start()` is not duplicated.
+
+**What remains unexplained can't be reproduced locally:**
+- **Slot conflicts during combat (H3/H8).** GC Suppression, Smokeable Smokes and thermal/NVG mods write slots 10/11/13 during play. This mainly predicts a broken or doubled look, not lower FPS.
+- **GPU-bound clients (H1/H2 at high resolution or on weaker GPUs).** Per-pixel cost could reach a few percent there; it is hidden on this CPU-bound PC.
+- **Populated multiplayer (H6/H0).** Local multiplayer with this stack is blocked by the script checksum mismatch.
+
+The most likely reading is that the reported degradation was **not mainly caused by v1's own rendering or re-apply cost**. If v1 contributed, it was through combat-time slot fights or GPU-bound clients.
 
 ## 5. Measurement protocol (to run)
 
