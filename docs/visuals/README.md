@@ -5,7 +5,7 @@ Optional client-side visual mod for Arma Reforger: a helmet-cam / bodycam combat
 - **Version:** 1.0.0
 - **Addon:** `addons/NML_Visuals` (GUID `81E04280BF506AF2`); Workshop ID `81E04280BF506AF2`, [Workshop page](https://reforger.armaplatform.com/workshop/81E04280BF506AF2-NML_Visuals)
 - **Dependencies:** base game only (no NML_Core, NML_Content, Myrove or third-party mods)
-- **Related:** [CHANGELOG](CHANGELOG.md), [Workshop text](WORKSHOP.md), [FRIT handoff](FRIT-HANDOFF.md)
+- **Related:** [CHANGELOG](CHANGELOG.md), [Workshop text](WORKSHOP.md), [FRIT handoff](FRIT-HANDOFF.md), [v2 Stage 0 audit](v2/STAGE0-AUDIT.md) (research; v1 performance and production-stack compatibility)
 
 ## What it does
 
