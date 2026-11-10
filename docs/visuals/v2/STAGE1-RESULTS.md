@@ -146,6 +146,29 @@ Notes:
 
 The most likely reading is that the reported degradation was **not mainly caused by v1's own rendering or re-apply cost**. If v1 contributed, it was through combat-time slot fights or GPU-bound clients.
 
+### Final evidence pass — historical multiplayer evidence (requested 2026-11-09, pending)
+
+Stage 1 stays open for one pass over FRIT's evidence from the period when v1 ran live: [FRIT-EVIDENCE-REQUEST.md](FRIT-EVIDENCE-REQUEST.md). Gate A is not created.
+
+Method:
+- `node tools/nml-visuals/v1-log-analysis.mjs <console.log>…` counts v1's `applied`/`cleared` lines per session, the rate per hour (with and without the player's own changes) and bursts (< 500 ms apart).
+- It attributes each apply to the nearest preceding event within 2 s: camera-index change, settings save, world start, player update, menu, Colormod material reload, user change.
+- **This attribution is an inference from proximity, not proof.**
+- Findings will be kept in three columns: **confirmed** (logs and measurements), **FRIT recollection**, **inference**.
+
+**Baseline from our own v1-era diag logs** (dev tuning sessions, 2026-10-14/15, so not production play):
+
+| Session | Length | Applies + clears | Per hour (excl. user changes) | Bursts | Main nearest causes |
+|---|---|---|---|---|---|
+| client6 11-57 | 28.6 min | 94 | 197 (46) | 20 | USER 72, SETTINGS_SAVE 12 |
+| client6 12-37 | 20.6 min | 69 | 201 (20) | 12 | USER 62 |
+| client6 14-51 | 35.9 min | 65 | 109 (12) | 13 | USER 58, MENU 3 |
+| client6 14-05 | 3.5 min | 47 | 806 (103) | 7 | USER 41, SETTINGS_SAVE 3 |
+| client6 10-14 23-25 | 4.6 min | 23 | 300 (300) | 8 | SETTINGS_SAVE 22 |
+| client7 14-55 | 2.5 min | 21 | 507 (24) | 5 | USER 20 |
+
+**Reading:** outside deliberate preset changes, re-applies in dev sessions came mostly from settings saves (the 23-25 session: diag-menu edits). That fits the `SETTINGS_OTHER` behaviour seen in runs 2–4. Production play with respawns, vehicles and drones may differ, and FRIT's logs are needed to see it.
+
 ## 5. Measurement protocol (to run)
 
 Each run alternates two variants in the same spot and view. Use `-nmlvCycle 60` with ABBA order, at least 8 pairs, and `-nmlvProbe 10` in both arms. Start with an OFF/OFF noise run (`-nmlvCycle 60:none/none`).

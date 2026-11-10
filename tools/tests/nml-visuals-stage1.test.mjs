@@ -9,6 +9,29 @@ import os from "node:os";
 import path from "node:path";
 import { parseLine, toBlocks, pairBlocks, meanSe, summarize, readLogs } from "../nml-visuals/probe-summary.mjs";
 import { snapshot, compare } from "../nml-visuals/cache-guard.mjs";
+import { analyze as analyzeV1 } from "../nml-visuals/v1-log-analysis.mjs";
+
+test("v1-log-analysis counts applies, bursts and nearest preceding causes", () =>
+{
+	const log = [
+		"12:00:00.000 SCRIPT       : [NML] Visuals: started (Colormod 0, enabled 1, preset AUTHENTIC)",
+		"12:00:00.500 SCRIPT       : [NML] Visuals: applied AUTHENTIC on camera 0 (lut x, overlays 1, lens 1)",
+		"12:00:10.000 PLATFORM     : Save data transaction to 'settings' started.",
+		"12:00:10.100 SCRIPT       : [NML] Visuals: applied AUTHENTIC on camera 0 (lut x, overlays 1, lens 1)",
+		"12:00:10.200 SCRIPT       : [NML] Visuals: applied AUTHENTIC on camera 0 (lut x, overlays 1, lens 1)",
+		"12:00:20.000 SCRIPT       : [NML] Visuals: applied AUTHENTIC on camera 1 (lut x, overlays 1, lens 1)",
+		"12:00:40.000 SCRIPT       : [NML] Visuals: player set OFF (overlays 1, fringe 1)",
+		"12:00:40.010 SCRIPT       : [NML] Visuals: cleared on camera 1",
+		"12:01:00.000 SCRIPT       : [NML] Visuals: applied AUTHENTIC on camera 1 (lut x, overlays 1, lens 1)",
+	].join("\n");
+	const r = analyzeV1(log, 2000);
+	assert.equal(r.applied, 5);
+	assert.equal(r.cleared, 1);
+	assert.equal(r.burstApplies, 1);
+	assert.deepEqual(r.cameras, [0, 1]);
+	assert.deepEqual(r.byCause, { WORLD: 1, SETTINGS_SAVE: 2, CAMERA_INDEX: 1, USER: 1, UNATTRIBUTED: 1 });
+	assert.equal(Math.round(r.minutes), 1);
+});
 
 const line = (phase, ms, frames) =>
 	`12:00:00.000  SCRIPT       : [NML] Probe: phase=${phase} ms=${ms} frames=${frames} mean100=${Math.round((ms * 100) / frames)} p50=16 p95=20 p99=30 max=40 s33=1 s50=0 s100=0 aSpk=0 aMax=0 applies=0,0,0,0,0,0,0,1 sets=3 clears=3 reasserts=0 cam=0 ctl=0 setOurs=0 setOther=0 starts=0 layers=lut+trim mode=legacy fringeSlot=13 filter=0 hideZero=0 preset=AUTHENTIC night=0 view=1P players=1`;
